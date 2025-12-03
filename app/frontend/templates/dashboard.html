@@ -1,0 +1,412 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+{% block body_class %}dash-page{% endblock %}
+
+{% block content %}
+<div class="dash-layout">
+  <aside class="dash-sidebar">
+    <div class="dash-sidebar-header">
+      <div class="dash-logo">
+        <div class="dash-logo-inner"></div>
+      </div>
+      <div class="dash-brand">
+        <span class="dash-brand-title">CyberWatch</span>
+        <span class="dash-brand-subtitle">Panel de operaciones</span>
+      </div>
+    </div>
+
+    <nav class="dash-nav">
+      <a href="/dashboard" class="dash-nav-item dash-nav-item-active">
+        <span class="dash-nav-dot"></span>
+        <span>Dashboard</span>
+      </a>
+      <a href="#" class="dash-nav-item">
+        <span class="dash-nav-dot"></span>
+        <span>Incidentes</span>
+      </a>
+      <a href="#" class="dash-nav-item">
+        <span class="dash-nav-dot"></span>
+        <span>Usuarios</span>
+      </a>
+      <a href="#" class="dash-nav-item">
+        <span class="dash-nav-dot"></span>
+        <span>Reportes</span>
+      </a>
+    </nav>
+
+    <div class="dash-sidebar-footer">
+      <div class="dash-user">
+        <div class="dash-user-avatar">{{ user.full_name[0]|upper }}</div>
+        <div class="dash-user-meta">
+          <span class="dash-user-name">{{ user.full_name }}</span>
+          <span class="dash-user-email">{{ user.email }}</span>
+        </div>
+      </div>
+      <a href="/logout" class="dash-logout-link">Cerrar sesión</a>
+    </div>
+  </aside>
+
+  <main class="dash-main">
+    <header class="dash-header">
+      <div>
+        <h1 class="dash-title">Visión general</h1>
+        <p class="dash-subtitle">Actividad reciente de seguridad</p>
+      </div>
+    </header>
+
+    <section class="dash-kpi-grid">
+      <div class="dash-kpi-card">
+        <span class="dash-kpi-label">Incidentes abiertos</span>
+        <span class="dash-kpi-value">{{ stats.open_incidents }}</span>
+      </div>
+      <div class="dash-kpi-card">
+        <span class="dash-kpi-label">Incidentes críticos</span>
+        <span class="dash-kpi-value dash-kpi-value-danger">{{ stats.critical_incidents }}</span>
+      </div>
+      <div class="dash-kpi-card">
+        <span class="dash-kpi-label">MTTR</span>
+        <span class="dash-kpi-value">{{ stats.mttr }}</span>
+      </div>
+      <div class="dash-kpi-card">
+        <span class="dash-kpi-label">Alertas hoy</span>
+        <span class="dash-kpi-value">{{ stats.alerts_today }}</span>
+      </div>
+    </section>
+
+    <section class="dash-panels">
+      <div class="dash-panel">
+        <div class="dash-panel-header">
+          <h2 class="dash-panel-title">Incidentes recientes</h2>
+          <span class="dash-panel-subtitle">Últimos eventos abiertos</span>
+        </div>
+        <div class="dash-table-wrapper">
+          <table class="dash-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Severidad</th>
+                <th>Origen</th>
+                <th>Título</th>
+                <th>Estado</th>
+                <th>Actualizado</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% if recent_incidents %}
+              {% for inc in recent_incidents %}
+              <tr>
+                <td>{{ inc.code }}</td>
+                <td>
+                  <span class="dash-badge dash-badge-{{ inc.severity|lower }}">
+                    {{ inc.severity }}
+                  </span>
+                </td>
+                <td>{{ inc.source }}</td>
+                <td class="dash-col-title">{{ inc.title }}</td>
+                <td>{{ inc.status }}</td>
+                <td>{{ inc.updated_at.strftime("%d/%m %H:%M") if inc.updated_at else '-' }}</td>
+              </tr>
+              {% endfor %}
+              {% else %}
+              <tr>
+                <td colspan="6" class="dash-table-empty">
+                  No hay incidentes registrados todavía.
+                </td>
+              </tr>
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="dash-panel dash-panel-side">
+        <div class="dash-panel-header">
+          <h2 class="dash-panel-title">Distribución por severidad</h2>
+          <span class="dash-panel-subtitle">Proporción de incidentes activos</span>
+        </div>
+
+        <div class="dash-severity-layout">
+          <div
+            class="dash-severity-donut"
+            style="
+              --p-critical: {{ severity_data.critico.percent }};
+              --p-high: {{ severity_data.alto.percent }};
+              --p-medium: {{ severity_data.medio.percent }};
+              --p-low: {{ severity_data.bajo.percent }};
+            "
+          >
+            <div class="dash-severity-center">
+              <span class="dash-severity-center-label">ACTIVOS</span>
+              <span class="dash-severity-center-value">{{ total_active }}</span>
+              <span class="dash-severity-center-sub">incidentes</span>
+            </div>
+          </div>
+
+          <ul class="dash-severity-legend">
+            <li class="dash-severity-legend-item">
+              <span class="dash-severity-legend-dot dash-severity-dot-critical"></span>
+              <div class="dash-severity-legend-text">
+                <span class="dash-severity-legend-label">Crítico</span>
+                <span class="dash-severity-legend-pill">
+                  {{ severity_data.critico.count }} · {{ severity_data.critico.percent }}%
+                </span>
+              </div>
+            </li>
+            <li class="dash-severity-legend-item">
+              <span class="dash-severity-legend-dot dash-severity-dot-high"></span>
+              <div class="dash-severity-legend-text">
+                <span class="dash-severity-legend-label">Alto</span>
+                <span class="dash-severity-legend-pill">
+                  {{ severity_data.alto.count }} · {{ severity_data.alto.percent }}%
+                </span>
+              </div>
+            </li>
+            <li class="dash-severity-legend-item">
+              <span class="dash-severity-legend-dot dash-severity-dot-medium"></span>
+              <div class="dash-severity-legend-text">
+                <span class="dash-severity-legend-label">Medio</span>
+                <span class="dash-severity-legend-pill">
+                  {{ severity_data.medio.count }} · {{ severity_data.medio.percent }}%
+                </span>
+              </div>
+            </li>
+            <li class="dash-severity-legend-item">
+              <span class="dash-severity-legend-dot dash-severity-dot-low"></span>
+              <div class="dash-severity-legend-text">
+                <span class="dash-severity-legend-label">Bajo</span>
+                <span class="dash-severity-legend-pill">
+                  {{ severity_data.bajo.count }} · {{ severity_data.bajo.percent }}%
+                </span>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <div class="dash-panel-divider"></div>
+
+        <div class="dash-panel-header">
+          <h2 class="dash-panel-title">Actividad reciente</h2>
+          <span class="dash-panel-subtitle">Últimos incidentes actualizados</span>
+        </div>
+
+        <ul class="dash-activity-list">
+          {% if recent_incidents %}
+            {% for item in recent_incidents %}
+            <li class="dash-activity-item">
+              <div class="dash-activity-dot
+                {% if item.severity == 'Crítico' or item.severity == 'critico' %}dash-activity-dot-critical
+                {% elif item.severity == 'Alto' %}dash-activity-dot-high
+                {% endif %}
+              "></div>
+              <div>
+                <div class="dash-activity-title">{{ item.title }}</div>
+                <div class="dash-activity-meta">{{ item.source }}</div>
+              </div>
+              <span class="dash-activity-time">
+                {{ item.updated_at.strftime("%d/%m %H:%M") if item.updated_at else '-' }}
+              </span>
+            </li>
+            {% endfor %}
+          {% else %}
+            <li class="dash-activity-item">
+              <div class="dash-activity-dot"></div>
+              <div>
+                <div class="dash-activity-title">Sin actividad reciente</div>
+                <div class="dash-activity-meta">Aún no hay incidentes registrados</div>
+              </div>
+              <span class="dash-activity-time">-</span>
+            </li>
+          {% endif %}
+        </ul>
+      </div>
+    </section>
+
+    <section class="dash-bottom">
+      <div class="dash-panel dash-chart-panel">
+        <div class="dash-chart-header">
+          <h2 class="dash-panel-title">Tendencia de incidentes</h2>
+          <span class="dash-panel-subtitle">Evolución por hora en las últimas 24h</span>
+        </div>
+        <div class="dash-chart-canvas">
+          <canvas id="incidentsTrendChart"></canvas>
+        </div>
+      </div>
+
+      <div class="dash-panel dash-chart-panel">
+        <div class="dash-chart-header">
+          <h2 class="dash-panel-title">Incidentes por tipo</h2>
+          <span class="dash-panel-subtitle">Top categorías detectadas</span>
+        </div>
+        <div class="dash-chart-canvas">
+          <canvas id="incidentsByTypeChart"></canvas>
+        </div>
+      </div>
+    </section>
+
+    {# contenedor oculto con los datos de las gráficas #}
+    <div id="chart-data"
+         data-trend-labels='{{ charts.trend_labels  | default([]) | tojson | e }}'
+         data-trend-total='{{ charts.trend_total   | default([]) | tojson | e }}'
+         data-trend-critical='{{ charts.trend_critical | default([]) | tojson | e }}'
+         data-type-labels='{{ charts.type_labels   | default([]) | tojson | e }}'
+         data-type-info='{{ charts.type_info     | default([]) | tojson | e }}'
+         data-type-high='{{ charts.type_high     | default([]) | tojson | e }}'
+         data-type-critical='{{ charts.type_critical | default([]) | tojson | e }}'>
+    </div>
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const trendCanvas = document.getElementById("incidentsTrendChart");
+  const typeCanvas = document.getElementById("incidentsByTypeChart");
+  const dataEl = document.getElementById("chart-data");
+
+  if (!trendCanvas || !typeCanvas || !dataEl) {
+    console.warn("Faltan elementos para las gráficas");
+    return;
+  }
+
+  const trendLabels   = JSON.parse(dataEl.dataset.trendLabels   || "[]");
+  const trendTotal    = JSON.parse(dataEl.dataset.trendTotal    || "[]");
+  const trendCritical = JSON.parse(dataEl.dataset.trendCritical || "[]");
+
+  const typeLabels    = JSON.parse(dataEl.dataset.typeLabels    || "[]");
+  const typeInfo      = JSON.parse(dataEl.dataset.typeInfo      || "[]");
+  const typeHigh      = JSON.parse(dataEl.dataset.typeHigh      || "[]");
+  const typeCritical2 = JSON.parse(dataEl.dataset.typeCritical  || "[]");
+
+  console.log("Trend data:", trendLabels, trendTotal, trendCritical);
+  console.log("Type data:", typeLabels, typeInfo, typeHigh, typeCritical2);
+
+  const textColor = "#e5e7eb";
+  const gridColor = "#111827";
+
+  const trendCtx = trendCanvas.getContext("2d");
+  new Chart(trendCtx, {
+    type: "line",
+    data: {
+      labels: trendLabels,
+      datasets: [
+        {
+          label: "Total",
+          data: trendTotal,
+          borderColor: "#fb923c",
+          backgroundColor: "rgba(251, 146, 60, 0.18)",
+          borderWidth: 2,
+          tension: 0.35,
+          pointRadius: 2,
+          pointBackgroundColor: "#fb923c"
+        },
+        {
+          label: "Críticos",
+          data: trendCritical,
+          borderColor: "#f97373",
+          backgroundColor: "rgba(248, 113, 113, 0.2)",
+          borderWidth: 2,
+          tension: 0.35,
+          pointRadius: 2,
+          pointBackgroundColor: "#f97373"
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: "top",
+          labels: {
+            color: textColor,
+            boxWidth: 10,
+            usePointStyle: true
+          }
+        },
+        tooltip: {
+          mode: "index",
+          intersect: false
+        }
+      },
+      interaction: {
+        mode: "index",
+        intersect: false
+      },
+      scales: {
+        x: {
+          grid: { display: false },
+          ticks: { color: textColor }
+        },
+        y: {
+          beginAtZero: true,
+          grid: { color: gridColor },
+          ticks: { color: textColor, precision: 0 }
+        }
+      }
+    }
+  });
+
+  const typeCtx = typeCanvas.getContext("2d");
+  new Chart(typeCtx, {
+    type: "bar",
+    data: {
+      labels: typeLabels,
+      datasets: [
+        {
+          label: "Información",
+          data: typeInfo,
+          backgroundColor: "#60a5fa",
+          borderRadius: 4,
+          maxBarThickness: 18
+        },
+        {
+          label: "Alto",
+          data: typeHigh,
+          backgroundColor: "#fb923c",
+          borderRadius: 4,
+          maxBarThickness: 18
+        },
+        {
+          label: "Crítico",
+          data: typeCritical2,
+          backgroundColor: "#f97373",
+          borderRadius: 4,
+          maxBarThickness: 18
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: "top",
+          labels: { color: textColor, boxWidth: 10 }
+        },
+        tooltip: {
+          mode: "index",
+          intersect: false
+        }
+      },
+      scales: {
+        x: {
+          grid: { display: false },
+          ticks: {
+            color: textColor,
+            maxRotation: 0,
+            minRotation: 0
+          }
+        },
+        y: {
+          beginAtZero: true,
+          grid: { color: gridColor },
+          ticks: { color: textColor, precision: 0 }
+        }
+      }
+    }
+  });
+});
+</script>
+
+{% endblock %}
