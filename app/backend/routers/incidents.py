@@ -16,6 +16,7 @@ from app.backend.repositories.incident_repository import get_incident_repository
 from app.backend.repositories.user_repository import UserRepository
 from app.backend.repositories.incident_attachment_repository import IncidentAttachmentRepository
 from app.backend.dependencies.auth import get_current_user
+from app.backend.core.constants import PAGINATION_OPTIONS, DEFAULT_PER_PAGE
 
 router = APIRouter(prefix="/incidents", tags=["incidents"])
 templates = Jinja2Templates(directory="app/frontend/templates")
@@ -38,8 +39,8 @@ async def list_incidents(
     repo = get_incident_repository(session)
     
     # Validar per_page
-    if per_page not in [10, 25, 100]:
-        per_page = 25
+    if per_page not in PAGINATION_OPTIONS:
+        per_page = DEFAULT_PER_PAGE
     
     # Calcular offset
     offset = (page - 1) * per_page
@@ -192,12 +193,17 @@ async def view_incident(
             detail="Incidente no encontrado"
         )
     
+    # Obtener logs adjuntos
+    attachment_repo = IncidentAttachmentRepository(session)
+    attachments = attachment_repo.get_by_incident_id(incident_id)
+    
     return templates.TemplateResponse(
         "incident_detail.html",
         {
             "request": request,
             "user": user,
             "incident": incident,
+            "attachments": attachments,
         },
     )
 
@@ -422,7 +428,7 @@ async def upload_attachment(
     return RedirectResponse(url=f"/incidents/{incident_id}/edit", status_code=303)
 
 
-@router.post("/{incident_id}/delete-attachment/{attachment_id}")
+@router.post("/{incident_id}/attachments/{attachment_id}/delete")
 async def delete_attachment(
     incident_id: int,
     attachment_id: int,
@@ -435,12 +441,25 @@ async def delete_attachment(
     # Verificar que el attachment existe y pertenece al incidente
     attachment = attachment_repo.get_by_id(attachment_id)
     if not attachment or attachment.incident_id != incident_id:
-        raise HTTPException(status_code=404, detail="Adjunto no encontrado")
+        return RedirectResponse(
+            url=f"/incidents/{incident_id}?error=Log+no+encontrado",
+            status_code=303
+        )
     
+    filename = attachment.filename
     attachment_repo.delete(attachment_id)
     
-    return RedirectResponse(url=f"/incidents/{incident_id}/edit", status_code=303)
-    incident.updated_at = datetime.now(timezone.utc)
-    repo.update(incident)
+    # Actualizar timestamp del incidente
+    repo = get_incident_repository(session)
+    incident = repo.get_by_id(incident_id)
+    if incident:
+        incident.updated_at = datetime.now(timezone.utc)
+        session.add(incident)
+        session.commit()
+    
+    return RedirectResponse(
+        url=f"/incidents/{incident_id}?success=Log+'{filename}'+eliminado+correctamente",
+        status_code=303
+    )
     
     return RedirectResponse(url="/incidents", status_code=303)

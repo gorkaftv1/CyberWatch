@@ -156,22 +156,18 @@
             <div class="section-header">
               <div class="section-icon section-icon-orange">
                 <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                  <path d="M10 2L3 8V18H7V12H13V18H17V8L10 2Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+                  <path d="M4 4h12M4 8h12M4 12h8M4 16h8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
                 </svg>
               </div>
               <div>
-                <h2 class="section-title">Adjuntar evidencias</h2>
-                <p class="section-subtitle">Archivos que han sido subidos para este incidente</p>
+                <h2 class="section-title">Logs del Incidente</h2>
+                <p class="section-subtitle">Archivos de log adjuntos para análisis</p>
               </div>
-              <button class="btn-add-small">
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                  <path d="M8 3V13M3 8H13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                </svg>
-                Subir
-              </button>
             </div>
 
+            {% if attachments %}
             <div class="evidence-list">
+              {% for attachment in attachments %}
               <div class="evidence-item">
                 <div class="evidence-icon evidence-icon-pdf">
                   <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
@@ -180,55 +176,41 @@
                   </svg>
                 </div>
                 <div class="evidence-info">
-                  <div class="evidence-name">logs-firewall-masd-d239-2025-12-02.txt</div>
-                  <div class="evidence-meta">2.8 MB · Subido hace 16 h</div>
+                  <div class="evidence-name">{{ attachment.filename }}</div>
+                  <div class="evidence-meta">
+                    {{ (attachment.content|length / 1024)|round(1) }} KB · 
+                    {{ attachment.content.count('\n') + 1 }} líneas · 
+                    Subido el {{ attachment.uploaded_at.strftime('%d/%m/%Y %H:%M') }}
+                  </div>
                 </div>
                 <div class="evidence-actions">
-                  <button class="btn-evidence-action" title="Descargar">
+                  <button class="btn-evidence-action" title="Ver contenido" onclick="toggleLogContent({{ attachment.id }})">
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                      <path d="M14 10V13C14 13.5523 13.5523 14 13 14H3C2.44772 14 2 13.5523 2 13V10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-                      <path d="M8 2V10M8 10L5 7M8 10L11 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                      <path d="M1 8C1 8 3.5 3 8 3C12.5 3 15 8 15 8C15 8 12.5 13 8 13C3.5 13 1 8 1 8Z" stroke="currentColor" stroke-width="1.5"/>
+                      <circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/>
                     </svg>
                   </button>
-                  <button class="btn-evidence-action" title="Eliminar">
+                  <button class="btn-evidence-action" title="Eliminar log" onclick="showDeleteLogModal({{ attachment.id }}, '{{ attachment.filename }}', {{ incident.id }})">
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                       <path d="M3 4H13M5 4V3C5 2.44772 5.44772 2 6 2H10C10.5523 2 11 2.44772 11 3V4M6.5 7.5V11.5M9.5 7.5V11.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
                     </svg>
                   </button>
                 </div>
               </div>
-
-              <div class="evidence-item">
-                <div class="evidence-icon evidence-icon-pdf">
-                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                    <path d="M12 2H5C4.44772 2 4 2.44772 4 3V17C4 17.5523 4.44772 18 5 18H15C15.5523 18 16 17.5523 16 17V6L12 2Z" stroke="currentColor" stroke-width="1.5"/>
-                    <path d="M12 2V6H16" stroke="currentColor" stroke-width="1.5"/>
-                  </svg>
-                </div>
-                <div class="evidence-info">
-                  <div class="evidence-name">informe-edr-endpoint-dffc348b.pdf</div>
-                  <div class="evidence-meta">820 KB · Subido hace 14 h</div>
-                </div>
-                <div class="evidence-actions">
-                  <button class="btn-evidence-action btn-action-success" title="Procesado">
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                      <path d="M2 8L6 12L14 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                  </button>
-                  <button class="btn-evidence-action" title="Descargar">
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                      <path d="M14 10V13C14 13.5523 13.5523 14 13 14H3C2.44772 14 2 13.5523 2 13V10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-                      <path d="M8 2V10M8 10L5 7M8 10L11 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                  </button>
-                </div>
+              <div id="log-content-{{ attachment.id }}" class="log-content" style="display: none;">
+                <pre>{{ attachment.content }}</pre>
               </div>
-
-              <div class="evidence-empty">
-                <p>Arrastra o selecciona más imágenes, logs, screenshots, PCAP, screenshots de alertas o archivos PDF.</p>
-                <span>No incluyas datos personales sin consentimiento en los adjuntos.</span>
-              </div>
+              {% endfor %}
             </div>
+            {% else %}
+            <div class="evidence-empty" style="text-align: center; padding: 3rem 1rem; color: #64748b;">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" style="margin: 0 auto 1rem; opacity: 0.5;">
+                <path d="M9 12h6M9 16h6M9 8h6M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+              <p style="font-size: 1.1rem; font-weight: 500; margin-bottom: 0.5rem;">Todavía no se han adjuntado logs</p>
+              <span style="font-size: 0.9rem;">Los archivos de log se pueden adjuntar desde el formulario de edición del incidente.</span>
+            </div>
+            {% endif %}
           </div>
         </div>
 
@@ -364,4 +346,112 @@
     </div>
   </main>
 </div>
+
+<!-- Toast Container -->
+<div id="toast-container"></div>
+
+<!-- Modal Eliminar Log -->
+<div id="deleteLogModal" class="modal-overlay" style="display: none;">
+  <div class="modal-container">
+    <div class="modal-header">
+      <div class="modal-icon modal-icon-danger">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+          <path d="M3 6h18M8 6V4c0-1.1.9-2 2-2h4c1.1 0 2 .9 2 2v2m3 0v14c0 1.1-.9 2-2 2H7c-1.1 0-2-.9-2-2V6h14z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M10 11v6M14 11v6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <h3 class="modal-title">Eliminar Log</h3>
+    </div>
+    <div class="modal-body">
+      <p>¿Estás seguro de que deseas eliminar este log?</p>
+      <div class="modal-warning-box">
+        <strong id="deleteLogFilename"></strong>
+        <span>Esta acción no se puede deshacer.</span>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn-secondary" onclick="closeDeleteLogModal()">Cancelar</button>
+      <form id="deleteLogForm" method="POST" style="display: inline;">
+        <button type="submit" class="btn-danger">Sí, eliminar</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+function toggleLogContent(attachmentId) {
+  const logContent = document.getElementById('log-content-' + attachmentId);
+  if (logContent.style.display === 'none') {
+    logContent.style.display = 'block';
+  } else {
+    logContent.style.display = 'none';
+  }
+}
+
+function showDeleteLogModal(attachmentId, filename, incidentId) {
+  const modal = document.getElementById('deleteLogModal');
+  const form = document.getElementById('deleteLogForm');
+  const filenameElement = document.getElementById('deleteLogFilename');
+  
+  filenameElement.textContent = filename;
+  form.action = '/incidents/' + incidentId + '/attachments/' + attachmentId + '/delete';
+  
+  modal.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+
+function closeDeleteLogModal() {
+  const modal = document.getElementById('deleteLogModal');
+  modal.style.display = 'none';
+  document.body.style.overflow = 'auto';
+}
+
+// Cerrar modal con ESC
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    closeDeleteLogModal();
+  }
+});
+
+// Sistema de Toast
+function showToast(message, type = 'success') {
+  const container = document.getElementById('toast-container');
+  const toast = document.createElement('div');
+  toast.className = 'toast toast-' + type;
+  
+  const icon = type === 'success' 
+    ? '<svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M16.667 5L7.5 14.167 3.333 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+    : '<svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 6v4m0 4h.01M19 10a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
+  
+  toast.innerHTML = `
+    <div class="toast-icon">${icon}</div>
+    <div class="toast-message">${message}</div>
+  `;
+  
+  container.appendChild(toast);
+  
+  setTimeout(() => {
+    toast.classList.add('toast-show');
+  }, 10);
+  
+  setTimeout(() => {
+    toast.classList.remove('toast-show');
+    setTimeout(() => {
+      container.removeChild(toast);
+    }, 300);
+  }, 3000);
+}
+
+// Mostrar toast si hay mensaje en la URL
+const urlParams = new URLSearchParams(window.location.search);
+if (urlParams.has('success')) {
+  showToast(urlParams.get('success'), 'success');
+  // Limpiar URL sin recargar
+  window.history.replaceState({}, document.title, window.location.pathname);
+}
+if (urlParams.has('error')) {
+  showToast(urlParams.get('error'), 'error');
+  window.history.replaceState({}, document.title, window.location.pathname);
+}
+</script>
 {% endblock %}

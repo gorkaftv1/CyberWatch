@@ -2,9 +2,15 @@ from fastapi import FastAPI, Request, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 
 from app.backend.database import init_db
 from app.backend.routers import auth_router, dashboard_router, incidents_router, users_router
+
+# Configurar rate limiter
+limiter = Limiter(key_func=get_remote_address)
 
 app = FastAPI(
     title="CyberWatch API",
@@ -39,6 +45,10 @@ app = FastAPI(
     redoc_url="/redoc",
     debug=True
 )
+
+# Configurar limiter en la app
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 app.mount("/static", StaticFiles(directory="app/frontend/static"), name="static")
 

@@ -7,6 +7,7 @@ from app.backend.database import get_session
 from sqlmodel import Session
 from app.backend.models.user import User
 from passlib.context import CryptContext
+from app.backend.core.constants import BCRYPT_MAX_PASSWORD_LENGTH
 
 router = APIRouter(prefix="/users", tags=["users"])
 templates = Jinja2Templates(directory="app/frontend/templates")
@@ -74,8 +75,8 @@ async def create_user(
     
     # Truncar password a 72 bytes (limitación de bcrypt)
     password_bytes = password.encode('utf-8')
-    if len(password_bytes) > 72:
-        password = password_bytes[:72].decode('utf-8', errors='ignore')
+    if len(password_bytes) > BCRYPT_MAX_PASSWORD_LENGTH:
+        password = password_bytes[:BCRYPT_MAX_PASSWORD_LENGTH].decode('utf-8', errors='ignore')
     
     # Hashear password
     hashed_password = pwd_context.hash(password)
@@ -141,9 +142,9 @@ async def update_user(
     # Solo actualizar password si se proporciona uno nuevo
     if password and password.strip():
         # Truncar password a 72 bytes (limitación de bcrypt)
-        password_bytes = password.encode('utf-8')
-        if len(password_bytes) > 72:
-            password = password_bytes[:72].decode('utf-8', errors='ignore')
+        password_bytes = new_password.encode('utf-8')
+        if len(password_bytes) > BCRYPT_MAX_PASSWORD_LENGTH:
+            new_password = password_bytes[:BCRYPT_MAX_PASSWORD_LENGTH].decode('utf-8', errors='ignore')
         edit_user.password = pwd_context.hash(password)
     
     user_repo.update(edit_user)

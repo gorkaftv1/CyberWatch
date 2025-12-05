@@ -15,6 +15,9 @@ python-multipart==0.0.20
 passlib[bcrypt]==1.7.4
 bcrypt==4.0.1
 
+# Rate limiting
+slowapi==0.1.9
+
 # Additional dependencies
 anyio==4.6.2.post1
 click==8.1.7

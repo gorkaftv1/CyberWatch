@@ -1,10 +1,10 @@
 import argparse
 from passlib.context import CryptContext
-
 from sqlmodel import Session
 
 from app.backend.database import engine, init_db
 from app.backend.models.user import User
+from app.backend.core.constants import BCRYPT_MAX_PASSWORD_LENGTH
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -18,8 +18,8 @@ def create_user(email: str, password: str, full_name: str, role: str = "analyst"
 
         # Truncar password a 72 bytes (limitación de bcrypt)
         password_bytes = password.encode('utf-8')
-        if len(password_bytes) > 72:
-            password = password_bytes[:72].decode('utf-8', errors='ignore')
+        if len(password_bytes) > BCRYPT_MAX_PASSWORD_LENGTH:
+            password = password_bytes[:BCRYPT_MAX_PASSWORD_LENGTH].decode('utf-8', errors='ignore')
         
         # Hashear la contraseña
         hashed_password = pwd_context.hash(password)
