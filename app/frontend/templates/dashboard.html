@@ -7,13 +7,15 @@
 <div class="dash-layout">
   <aside class="dash-sidebar">
     <div class="dash-sidebar-header">
-      <div class="dash-logo">
-        <div class="dash-logo-inner"></div>
-      </div>
-      <div class="dash-brand">
-        <span class="dash-brand-title">CyberWatch</span>
-        <span class="dash-brand-subtitle">Panel de operaciones</span>
-      </div>
+      <a href="/dashboard" class="dash-logo-link">
+        <div class="dash-logo">
+          <img src="/static/images/logo.png" alt="CyberWatch Logo" class="dash-logo-img" onerror="this.style.display='none'">
+        </div>
+        <div class="dash-brand">
+          <span class="dash-brand-title">CyberWatch</span>
+          <span class="dash-brand-subtitle">Panel de operaciones</span>
+        </div>
+      </a>
     </div>
 
     <nav class="dash-nav">
@@ -21,18 +23,16 @@
         <span class="dash-nav-dot"></span>
         <span>Dashboard</span>
       </a>
-      <a href="#" class="dash-nav-item">
+      <a href="/incidents" class="dash-nav-item">
         <span class="dash-nav-dot"></span>
         <span>Incidentes</span>
       </a>
-      <a href="#" class="dash-nav-item">
+      {% if user.role == 'admin' %}
+      <a href="/users" class="dash-nav-item">
         <span class="dash-nav-dot"></span>
         <span>Usuarios</span>
       </a>
-      <a href="#" class="dash-nav-item">
-        <span class="dash-nav-dot"></span>
-        <span>Reportes</span>
-      </a>
+      {% endif %}
     </nav>
 
     <div class="dash-sidebar-footer">
@@ -53,6 +53,13 @@
         <h1 class="dash-title">Visión general</h1>
         <p class="dash-subtitle">Actividad reciente de seguridad</p>
       </div>
+      <a href="/incidents/new" class="dash-btn-create">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+        Crear incidente
+      </a>
     </header>
 
     <section class="dash-kpi-grid">
@@ -95,8 +102,8 @@
             <tbody>
               {% if recent_incidents %}
               {% for inc in recent_incidents %}
-              <tr>
-                <td>{{ inc.code }}</td>
+              <tr class="dash-table-row-clickable" onclick="window.location.href='/incidents/{{ inc.id }}'">
+                <td><a href="/incidents/{{ inc.id }}" class="dash-link">{{ inc.code }}</a></td>
                 <td>
                   <span class="dash-badge dash-badge-{{ inc.severity|lower }}">
                     {{ inc.severity }}
@@ -193,14 +200,14 @@
         <ul class="dash-activity-list">
           {% if recent_incidents %}
             {% for item in recent_incidents %}
-            <li class="dash-activity-item">
+            <li class="dash-activity-item dash-activity-clickable" onclick="window.location.href='/incidents/{{ item.id }}'">
               <div class="dash-activity-dot
                 {% if item.severity == 'Crítico' or item.severity == 'critico' %}dash-activity-dot-critical
                 {% elif item.severity == 'Alto' %}dash-activity-dot-high
                 {% endif %}
               "></div>
               <div>
-                <div class="dash-activity-title">{{ item.title }}</div>
+                <div class="dash-activity-title"><a href="/incidents/{{ item.id }}" class="dash-link">{{ item.title }}</a></div>
                 <div class="dash-activity-meta">{{ item.source }}</div>
               </div>
               <span class="dash-activity-time">

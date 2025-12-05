@@ -1,0 +1,218 @@
+{% extends "base.html" %}
+
+{% block title %}{% if mode == 'create' %}Nuevo Usuario{% else %}Editar Usuario{% endif %}{% endblock %}
+{% block body_class %}dash-page{% endblock %}
+
+{% block content %}
+<div class="dash-layout">
+  <aside class="dash-sidebar">
+    <div class="dash-sidebar-header">
+      <a href="/dashboard" class="dash-logo-link">
+        <div class="dash-logo">
+          <img src="/static/images/logo.png" alt="CyberWatch Logo" class="dash-logo-img" onerror="this.style.display='none'">
+        </div>
+        <div class="dash-brand">
+          <span class="dash-brand-title">CyberWatch</span>
+          <span class="dash-brand-subtitle">SOC Console</span>
+        </div>
+      </a>
+    </div>
+
+    <nav class="dash-nav">
+      <a href="/dashboard" class="dash-nav-item">
+        <span class="dash-nav-dot"></span>
+        <span>Dashboard</span>
+      </a>
+      <a href="/incidents" class="dash-nav-item">
+        <span class="dash-nav-dot"></span>
+        <span>Incidentes</span>
+      </a>
+      <a href="/users" class="dash-nav-item dash-nav-item-active">
+        <span class="dash-nav-dot"></span>
+        <span>Usuarios</span>
+      </a>
+    </nav>
+
+    <div class="dash-sidebar-footer">
+      <div class="dash-user">
+        <div class="dash-user-avatar">{{ user.full_name[0]|upper }}</div>
+        <div class="dash-user-meta">
+          <span class="dash-user-name">{{ user.full_name }}</span>
+          <span class="dash-user-email">{{ user.email }}</span>
+        </div>
+      </div>
+      <a href="/logout" class="dash-logout-link">Cerrar sesión</a>
+    </div>
+  </aside>
+  
+  <main class="dash-main">
+    <header class="form-header">
+      <div class="form-header-left">
+        <a href="/users" class="btn-back">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <path d="M12 16L6 10L12 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </a>
+        <div>
+          <h1 class="form-title">{% if mode == 'create' %}Nuevo usuario{% else %}Editar usuario{% endif %}</h1>
+          {% if edit_user %}
+          <p class="form-subtitle">{{ edit_user.email }}</p>
+          {% else %}
+          <p class="form-subtitle">Rellena los campos obligatorios marcados con *</p>
+          {% endif %}
+        </div>
+      </div>
+    </header>
+
+    <div class="form-container">
+      <div class="form-main">
+        <div class="form-card">
+          {% if error %}
+          <div class="form-error">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="1.5"/>
+              <path d="M10 6V10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+              <circle cx="10" cy="13" r="0.5" fill="currentColor"/>
+            </svg>
+            {{ error }}
+          </div>
+          {% endif %}
+
+          <div class="form-section">
+            <div class="section-header">
+              <div class="section-icon section-icon-blue">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                  <circle cx="10" cy="7" r="4" stroke="currentColor" stroke-width="1.5"/>
+                  <path d="M3 18C3 14.134 6.134 11 10 11C13.866 11 17 14.134 17 18" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                </svg>
+              </div>
+              <div>
+                <h2 class="section-title">Información del usuario</h2>
+                <p class="section-subtitle">Datos básicos y credenciales</p>
+              </div>
+            </div>
+
+            <form method="POST" 
+                  action="{% if mode == 'create' %}/users/create{% else %}/users/{{ edit_user.id }}/update{% endif %}"
+                  class="form-grid">
+              
+              <div class="form-group">
+                <label for="full_name" class="form-label">Nombre completo *</label>
+                <input 
+                  type="text" 
+                  id="full_name" 
+                  name="full_name" 
+                  class="form-input"
+                  value="{% if edit_user %}{{ edit_user.full_name }}{% endif %}"
+                  required
+                  placeholder="Juan Pérez García"
+                >
+              </div>
+              
+              <div class="form-group">
+                <label for="email" class="form-label">Email *</label>
+                <input 
+                  type="email" 
+                  id="email" 
+                  name="email" 
+                  class="form-input"
+                  value="{% if edit_user %}{{ edit_user.email }}{% endif %}"
+                  required
+                  placeholder="usuario@cyberwatch.com"
+                >
+              </div>
+
+              <div class="form-group">
+                <label for="password" class="form-label">
+                  Contraseña {% if mode == 'create' %}*{% else %}(dejar en blanco para no cambiar){% endif %}
+                </label>
+                <input 
+                  type="password" 
+                  id="password" 
+                  name="password" 
+                  class="form-input"
+                  {% if mode == 'create' %}required{% endif %}
+                  placeholder="••••••••"
+                  minlength="6"
+                >
+                {% if mode == 'edit' %}
+                <span class="form-hint">Solo completa este campo si deseas cambiar la contraseña</span>
+                {% endif %}
+              </div>
+              
+              <div class="form-group">
+                <label for="role" class="form-label">Rol *</label>
+                <select 
+                  id="role" 
+                  name="role" 
+                  class="form-select"
+                  required
+                >
+                  <option value="">Selecciona rol</option>
+                  <option value="analyst" {% if edit_user and edit_user.role == 'analyst' %}selected{% endif %}>
+                    Analista
+                  </option>
+                  <option value="admin" {% if edit_user and edit_user.role == 'admin' %}selected{% endif %}>
+                    Administrador
+                  </option>
+                </select>
+                <span class="form-hint">Los administradores tienen acceso completo al sistema</span>
+              </div>
+
+              <div class="form-group">
+                <label for="is_active" class="form-label">Estado *</label>
+                <select 
+                  id="is_active" 
+                  name="is_active" 
+                  class="form-select"
+                  required
+                >
+                  <option value="true" {% if not edit_user or edit_user.is_active %}selected{% endif %}>
+                    Activo
+                  </option>
+                  <option value="false" {% if edit_user and not edit_user.is_active %}selected{% endif %}>
+                    Inactivo
+                  </option>
+                </select>
+                <span class="form-hint">Los usuarios inactivos no pueden iniciar sesión</span>
+              </div>
+
+              <div class="form-actions" style="grid-column: 1 / -1;">
+                <a href="/users" class="btn-secondary">Cancelar</a>
+                <button type="submit" class="btn-primary">
+                  {% if mode == 'create' %}Crear usuario{% else %}Guardar cambios{% endif %}
+                </button>
+              </div>
+            </form>
+          </div>
+
+          {% if mode == 'edit' and edit_user.id != user.id %}
+          <div class="form-section" style="margin-top: 32px; border-top: 1px solid var(--border-card); padding-top: 32px;">
+            <div class="section-header">
+              <div class="section-icon" style="background: rgba(248, 113, 113, 0.1);">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#f87171">
+                  <path d="M3 6L5 6L17 6" stroke-width="1.5" stroke-linecap="round"/>
+                  <path d="M8 6V4C8 3.44772 8.44772 3 9 3H11C11.5523 3 12 3.44772 12 4V6M15 6V16C15 16.5523 14.5523 17 14 17H6C5.44772 17 5 16.5523 5 16V6" stroke-width="1.5" stroke-linecap="round"/>
+                </svg>
+              </div>
+              <div>
+                <h2 class="section-title" style="color: #f87171;">Zona de peligro</h2>
+                <p class="section-subtitle">Eliminar este usuario es una acción irreversible</p>
+              </div>
+            </div>
+            <form method="POST" action="/users/{{ edit_user.id }}/delete" 
+                  onsubmit="return confirm('¿Estás COMPLETAMENTE SEGURO de que deseas eliminar este usuario? Esta acción NO se puede deshacer.');"
+                  style="margin-top: 20px;">
+              <button type="submit" class="btn-danger">
+                Eliminar usuario permanentemente
+              </button>
+            </form>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+{% endblock %}
+

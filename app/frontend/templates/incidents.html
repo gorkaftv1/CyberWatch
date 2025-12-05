@@ -1,0 +1,391 @@
+{% extends "base.html" %}
+
+{% block title %}Incidentes{% endblock %}
+{% block body_class %}dash-page{% endblock %}
+
+{% block content %}
+<div class="dash-layout">
+  <aside class="dash-sidebar">
+    <div class="dash-sidebar-header">
+      <a href="/dashboard" class="dash-logo-link">
+        <div class="dash-logo">
+          <img src="/static/images/logo.png" alt="CyberWatch Logo" class="dash-logo-img" onerror="this.style.display='none'">
+        </div>
+        <div class="dash-brand">
+          <span class="dash-brand-title">CyberWatch</span>
+          <span class="dash-brand-subtitle">SOC Console</span>
+        </div>
+      </a>
+    </div>
+
+    <nav class="dash-nav">
+      <a href="/dashboard" class="dash-nav-item">
+        <span class="dash-nav-dot"></span>
+        <span>Dashboard</span>
+      </a>
+      <a href="/incidents" class="dash-nav-item dash-nav-item-active">
+        <span class="dash-nav-dot"></span>
+        <span>Incidentes</span>
+      </a>
+      {% if user.role == 'admin' %}
+      <a href="/users" class="dash-nav-item">
+        <span class="dash-nav-dot"></span>
+        <span>Usuarios</span>
+      </a>
+      {% endif %}
+    </nav>
+
+    <div class="dash-sidebar-footer">
+      <div class="dash-user">
+        <div class="dash-user-avatar">{{ user.full_name[0]|upper }}</div>
+        <div class="dash-user-meta">
+          <span class="dash-user-name">{{ user.full_name }}</span>
+          <span class="dash-user-email">{{ user.email }}</span>
+        </div>
+      </div>
+      <a href="/logout" class="dash-logout-link">Cerrar sesión</a>
+    </div>
+  </aside>
+
+  <main class="dash-main">
+    <header class="incidents-header">
+      <div class="incidents-header-left">
+        <h1 class="incidents-title">Incidentes</h1>
+        <span class="incidents-subtitle">12 nuevos en las últimas 24h</span>
+      </div>
+      <div class="incidents-header-right">
+        <div class="search-box">
+          <input type="text" placeholder="Buscar en todos los campos..." id="searchInput" value="{{ filters.search or '' }}">
+        </div>
+        <button class="btn-filter" id="btnToggleFilters">
+          <span>Últimas 24h</span>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path d="M4 6L8 10L12 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </button>
+        <button class="btn-icon" id="btnNotifications">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <path d="M10 2C8.34315 2 7 3.34315 7 5V6C7 7.30622 6.16519 8.41746 5 8.82929V15H15V8.82929C13.8348 8.41746 13 7.30622 13 6V5C13 3.34315 11.6569 2 10 2Z" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M8 15V16C8 17.1046 8.89543 18 10 18C11.1046 18 12 17.1046 12 16V15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+        </button>
+        <div class="user-avatar-small">{{ user.full_name[0]|upper }}</div>
+      </div>
+    </header>
+
+    <div class="incidents-container">
+      <div class="incidents-main">
+        <div class="incidents-toolbar">
+          <h2 class="incidents-list-title">Lista de incidentes</h2>
+          <p class="incidents-list-subtitle">Mostrando {{ ((page - 1) * per_page) + 1 }}-{{ [page * per_page, total_incidents]|min }} de {{ total_incidents }} incidentes</p>
+          
+          <div class="incidents-toolbar-actions">
+            <div class="per-page-selector">
+              <label>Mostrar:</label>
+              <select id="perPageSelect" onchange="changePerPage(this.value)">
+                <option value="10" {% if per_page == 10 %}selected{% endif %}>10</option>
+                <option value="25" {% if per_page == 25 %}selected{% endif %}>25</option>
+                <option value="100" {% if per_page == 100 %}selected{% endif %}>100</option>
+              </select>
+            </div>
+            <div class="search-inline">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.5"/>
+                <path d="M11 11L14 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+              </svg>
+              <input type="text" placeholder="Buscar por ID..." id="searchById">
+            </div>
+            <a href="/incidents/export/csv{% if filters.severity or filters.status or filters.source or filters.owner %}?{% endif %}{% if filters.severity %}severity={{ filters.severity }}&{% endif %}{% if filters.status %}status={{ filters.status }}&{% endif %}{% if filters.source %}source={{ filters.source }}&{% endif %}{% if filters.owner %}owner={{ filters.owner }}{% endif %}" class="btn-export">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path d="M14 10V13C14 13.5523 13.5523 14 13 14H3C2.44772 14 2 13.5523 2 13V10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                <path d="M8 2V10M8 10L5 7M8 10L11 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              CSV
+            </a>
+            <a href="/incidents/new" class="btn-primary">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path d="M8 3V13M3 8H13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+              Nuevo incidente
+            </a>
+          </div>
+        </div>
+
+        <div class="incidents-table-wrapper">
+          <table class="incidents-table">
+            <thead>
+              <tr>
+                <th>ID<br>INCIDENTE</th>
+                <th>FECHA<br>REPORTE</th>
+                <th>GRAVEDAD</th>
+                <th>TIPO</th>
+                <th>ESTADO CICLO</th>
+                <th>RESPONSABLE</th>
+                <th>ÚLTIMA<br>ACCIÓN</th>
+                <th>ACCIONES</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% if incidents %}
+              {% for inc in incidents %}
+              <tr>
+                <td>
+                  <a href="/incidents/{{ inc.id }}" class="incident-code">{{ inc.code }}</a>
+                </td>
+                <td>
+                  <div class="incident-date">
+                    {{ inc.detected_at.strftime('%Y-%m-%d %H:%M') if inc.detected_at else 'N/A' }}
+                    {% if inc.detected_at %}
+                    <span class="incident-time-ago">Hace {{ ((now.replace(tzinfo=None) - inc.detected_at.replace(tzinfo=None))|abs).total_seconds() // 60 | int }} min</span>
+                    {% endif %}
+                  </div>
+                </td>
+                <td>
+                  <span class="badge-severity badge-severity-{{ inc.severity.lower() }}">
+                    {{ inc.severity }}
+                  </span>
+                </td>
+                <td>
+                  <div class="incident-type">
+                    <strong>{{ inc.title[:30] }}{% if inc.title|length > 30 %}...{% endif %}</strong>
+                    <span class="incident-source">{{ inc.source }}</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="incident-status">
+                    <span class="status-badge status-{{ inc.status.lower().replace(' ', '-') }}">{{ inc.status }}</span>
+                    <span class="status-detail">Fase: {{ inc.status }}</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="incident-owner">
+                    {% if inc.owner %}
+                    <div class="owner-avatar">{{ inc.owner[0]|upper }}</div>
+                    <div class="owner-info">
+                      <strong>{{ inc.owner }}</strong>
+                      <span>Turno {{ (loop.index % 3) + 1 }}</span>
+                    </div>
+                    {% else %}
+                    <span class="text-muted">Sin asignar</span>
+                    {% endif %}
+                  </div>
+                </td>
+                <td>
+                  <div class="incident-action">
+                    <strong>Regla EDR activada</strong>
+                    <span>Auto-aislamiento aplicado</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="incident-actions">
+                    <a href="/incidents/{{ inc.id }}" class="action-btn" title="Ver detalle">
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                        <path d="M8 3C4.5 3 2 8 2 8s2.5 5 6 5 6-5 6-5-2.5-5-6-5z" stroke="currentColor" stroke-width="1.5"/>
+                        <circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/>
+                      </svg>
+                    </a>
+                    <a href="/incidents/{{ inc.id }}/edit" class="action-btn" title="Editar">
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                        <path d="M11.5 2.5l2 2L6 12H4v-2l7.5-7.5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                    </a>
+                  </div>
+                </td>
+              </tr>
+              {% endfor %}
+              {% else %}
+              <tr>
+                <td colspan="8" class="empty-state">
+                  <p>No se encontraron incidentes</p>
+                </td>
+              </tr>
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+
+        <div class="incidents-pagination">
+          <span class="pagination-info">{{ ((page - 1) * per_page) + 1 }}-{{ [page * per_page, total_incidents]|min }} de {{ total_incidents }}</span>
+          <div class="pagination-controls">
+            {% if page > 1 %}
+            <a href="?page={{ page - 1 }}&per_page={{ per_page }}{% if filters.severity %}&severity={{ filters.severity }}{% endif %}{% if filters.status %}&status={{ filters.status }}{% endif %}{% if filters.source %}&source={{ filters.source }}{% endif %}{% if filters.owner %}&owner={{ filters.owner }}{% endif %}{% if filters.search %}&search={{ filters.search }}{% endif %}" class="page-btn">&lt;</a>
+            {% else %}
+            <button class="page-btn" disabled>&lt;</button>
+            {% endif %}
+            
+            {% set start_page = [1, page - 2]|max %}
+            {% set end_page = [total_pages, page + 2]|min %}
+            
+            {% if start_page > 1 %}
+            <a href="?page=1&per_page={{ per_page }}{% if filters.severity %}&severity={{ filters.severity }}{% endif %}{% if filters.status %}&status={{ filters.status }}{% endif %}{% if filters.source %}&source={{ filters.source }}{% endif %}{% if filters.owner %}&owner={{ filters.owner }}{% endif %}{% if filters.search %}&search={{ filters.search }}{% endif %}" class="page-btn">1</a>
+            {% if start_page > 2 %}
+            <span class="page-ellipsis">...</span>
+            {% endif %}
+            {% endif %}
+            
+            {% for p in range(start_page, end_page + 1) %}
+            {% if p == page %}
+            <button class="page-btn page-btn-active">{{ p }}</button>
+            {% else %}
+            <a href="?page={{ p }}&per_page={{ per_page }}{% if filters.severity %}&severity={{ filters.severity }}{% endif %}{% if filters.status %}&status={{ filters.status }}{% endif %}{% if filters.source %}&source={{ filters.source }}{% endif %}{% if filters.owner %}&owner={{ filters.owner }}{% endif %}{% if filters.search %}&search={{ filters.search }}{% endif %}" class="page-btn">{{ p }}</a>
+            {% endif %}
+            {% endfor %}
+            
+            {% if end_page < total_pages %}
+            {% if end_page < total_pages - 1 %}
+            <span class="page-ellipsis">...</span>
+            {% endif %}
+            <a href="?page={{ total_pages }}&per_page={{ per_page }}{% if filters.severity %}&severity={{ filters.severity }}{% endif %}{% if filters.status %}&status={{ filters.status }}{% endif %}{% if filters.source %}&source={{ filters.source }}{% endif %}{% if filters.owner %}&owner={{ filters.owner }}{% endif %}{% if filters.search %}&search={{ filters.search }}{% endif %}" class="page-btn">{{ total_pages }}</a>
+            {% endif %}
+            
+            {% if page < total_pages %}
+            <a href="?page={{ page + 1 }}&per_page={{ per_page }}{% if filters.severity %}&severity={{ filters.severity }}{% endif %}{% if filters.status %}&status={{ filters.status }}{% endif %}{% if filters.source %}&source={{ filters.source }}{% endif %}{% if filters.owner %}&owner={{ filters.owner }}{% endif %}{% if filters.search %}&search={{ filters.search }}{% endif %}" class="page-btn">&gt;</a>
+            {% else %}
+            <button class="page-btn" disabled>&gt;</button>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <aside class="incidents-filters" id="filtersPanel">
+        <div class="filters-header">
+          <h3>Filtros avanzados</h3>
+          <p>Refina los {{ total_incidents }} incidentes</p>
+          <button class="btn-collapse" id="btnCollapseFilters">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path d="M6 4L10 8L6 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </button>
+        </div>
+
+        <form method="get" action="/incidents" id="filtersForm">
+          <div class="filter-group">
+            <label class="filter-label">Gravedad</label>
+            <div class="filter-checkboxes">
+              <label class="checkbox-label">
+                <input type="checkbox" name="severity" value="Crítico" {% if filters.severity == 'Crítico' %}checked{% endif %}>
+                <span class="checkbox-custom checkbox-critical"></span>
+                Crítico
+              </label>
+              <label class="checkbox-label">
+                <input type="checkbox" name="severity" value="Alto" {% if filters.severity == 'Alto' %}checked{% endif %}>
+                <span class="checkbox-custom checkbox-alto"></span>
+                Alto
+              </label>
+              <label class="checkbox-label">
+                <input type="checkbox" name="severity" value="Medio" {% if filters.severity == 'Medio' %}checked{% endif %}>
+                <span class="checkbox-custom checkbox-medio"></span>
+                Medio
+              </label>
+              <label class="checkbox-label">
+                <input type="checkbox" name="severity" value="Bajo" {% if filters.severity == 'Bajo' %}checked{% endif %}>
+                <span class="checkbox-custom checkbox-bajo"></span>
+                Bajo
+              </label>
+            </div>
+            <p class="filter-selection">4 seleccionadas de 4</p>
+          </div>
+
+          <div class="filter-group">
+            <label class="filter-label">Tipo de incidente</label>
+            <select name="source" class="filter-select">
+              <option value="">Todos</option>
+              {% for src in sources %}
+              <option value="{{ src }}" {% if filters.source == src %}selected{% endif %}>{{ src }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="filter-group">
+            <label class="filter-label">Estado del ciclo</label>
+            <div class="filter-checkboxes">
+              <label class="checkbox-label">
+                <input type="checkbox" name="status" value="Abierto" {% if filters.status == 'Abierto' %}checked{% endif %}>
+                <span class="checkbox-custom"></span>
+                Abierto
+              </label>
+              <label class="checkbox-label">
+                <input type="checkbox" name="status" value="En investigación" {% if filters.status == 'En investigación' %}checked{% endif %}>
+                <span class="checkbox-custom"></span>
+                Investigación
+              </label>
+              <label class="checkbox-label">
+                <input type="checkbox" name="status" value="Mitigado" {% if filters.status == 'Mitigado' %}checked{% endif %}>
+                <span class="checkbox-custom"></span>
+                Mitigado
+              </label>
+              <label class="checkbox-label">
+                <input type="checkbox" name="status" value="Cerrado" {% if filters.status == 'Cerrado' %}checked{% endif %}>
+                <span class="checkbox-custom"></span>
+                Cerrado
+              </label>
+            </div>
+          </div>
+
+          <div class="filter-group">
+            <label class="filter-label">Responsable</label>
+            <select name="owner" class="filter-select">
+              <option value="">Todos los analistas</option>
+              {% for owner in owners %}
+              <option value="{{ owner }}" {% if filters.owner == owner %}selected{% endif %}>{{ owner }}</option>
+              {% endfor %}
+            </select>
+            {% if user.role == 'analyst' and filters.owner == user.full_name %}
+            <p class="filter-hint" style="color: #fbbf24; margin-top: 4px;">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style="display: inline; vertical-align: middle; margin-right: 4px;">
+                <path d="M7 1L9 5L13 5.5L10 8.5L11 13L7 10.5L3 13L4 8.5L1 5.5L5 5L7 1Z" fill="currentColor"/>
+              </svg>
+              Filtro por defecto: tus incidentes
+            </p>
+            {% endif %}
+          </div>
+
+          <div class="filter-group">
+            <label class="filter-label">Control por rol aplicado</label>
+            <p class="filter-hint">Filtrado automático según tu rol</p>
+          </div>
+
+          <div class="filter-actions">
+            <button type="button" class="btn-clear" onclick="window.location.href='/incidents'">Limpiar filtros</button>
+            <button type="submit" class="btn-apply">Aplicar</button>
+          </div>
+
+          <p class="filter-footer">Recarga rápida: la tabla se actualiza en < 400ms tras aplicar filtros.</p>
+        </form>
+      </aside>
+    </div>
+  </main>
+</div>
+
+<script>
+  // Toggle filters panel
+  document.getElementById('btnToggleFilters')?.addEventListener('click', () => {
+    document.getElementById('filtersPanel')?.classList.toggle('filters-collapsed');
+  });
+  
+  document.getElementById('btnCollapseFilters')?.addEventListener('click', () => {
+    document.getElementById('filtersPanel')?.classList.toggle('filters-collapsed');
+  });
+
+  // Search functionality
+  document.getElementById('searchInput')?.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+      const query = e.target.value;
+      if (query) {
+        window.location.href = `/incidents?search=${encodeURIComponent(query)}`;
+      }
+    }
+  });
+
+  // Change per page
+  function changePerPage(value) {
+    const urlParams = new URLSearchParams(window.location.search);
+    urlParams.set('per_page', value);
+    urlParams.set('page', '1'); // Reset to first page
+    window.location.href = `/incidents?${urlParams.toString()}`;
+  }
+
+  // Store current time for relative time calculation
+  const now = new Date();
+</script>
+{% endblock %}

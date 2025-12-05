@@ -1,9 +1,12 @@
 import argparse
+from passlib.context import CryptContext
 
 from sqlmodel import Session
 
 from app.backend.database import engine, init_db
 from app.backend.models.user import User
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 def create_user(email: str, password: str, full_name: str, role: str = "analyst", is_active: bool = True):
@@ -13,9 +16,17 @@ def create_user(email: str, password: str, full_name: str, role: str = "analyst"
         if existing:
             raise SystemExit(f"Ya existe un usuario con el email: {email}")
 
+        # Truncar password a 72 bytes (limitación de bcrypt)
+        password_bytes = password.encode('utf-8')
+        if len(password_bytes) > 72:
+            password = password_bytes[:72].decode('utf-8', errors='ignore')
+        
+        # Hashear la contraseña
+        hashed_password = pwd_context.hash(password)
+
         user = User(
             email=email,
-            password=password,
+            password=hashed_password,
             full_name=full_name,
             role=role,
             is_active=is_active,
@@ -27,9 +38,9 @@ def create_user(email: str, password: str, full_name: str, role: str = "analyst"
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Crear usuario para CyberWatch (prototipo).")
+    parser = argparse.ArgumentParser(description="Crear usuario para CyberWatch.")
     parser.add_argument("--email", required=True, help="Email del usuario")
-    parser.add_argument("--password", required=True, help="Contraseña en texto plano (prototipo)")
+    parser.add_argument("--password", required=True, help="Contraseña (se hasheará automáticamente)")
     parser.add_argument("--full-name", required=True, help="Nombre completo")
     parser.add_argument("--role", default="analyst", choices=["admin", "analyst"], help="Rol del usuario")
     parser.add_argument("--inactive", action="store_true", help="Crear usuario inactivo")

@@ -1,0 +1,367 @@
+{% extends "base.html" %}
+
+{% block title %}{{ incident.code }} - Detalle{% endblock %}
+{% block body_class %}dash-page{% endblock %}
+
+{% block content %}
+<div class="dash-layout">
+  <aside class="dash-sidebar">
+    <div class="dash-sidebar-header">
+      <a href="/dashboard" class="dash-logo-link">
+        <div class="dash-logo">
+          <img src="/static/images/logo.png" alt="CyberWatch Logo" class="dash-logo-img" onerror="this.style.display='none'">
+        </div>
+        <div class="dash-brand">
+          <span class="dash-brand-title">CyberWatch</span>
+          <span class="dash-brand-subtitle">SOC Console</span>
+        </div>
+      </a>
+    </div>
+
+    <nav class="dash-nav">
+      <a href="/dashboard" class="dash-nav-item">
+        <span class="dash-nav-dot"></span>
+        <span>Dashboard</span>
+      </a>
+      <a href="/incidents" class="dash-nav-item dash-nav-item-active">
+        <span class="dash-nav-dot"></span>
+        <span>Incidentes</span>
+      </a>
+      {% if user.role == 'admin' %}
+      <a href="/users" class="dash-nav-item">
+        <span class="dash-nav-dot"></span>
+        <span>Usuarios</span>
+      </a>
+      {% endif %}
+    </nav>
+
+    <div class="dash-sidebar-footer">
+      <div class="dash-user">
+        <div class="dash-user-avatar">{{ user.full_name[0]|upper }}</div>
+        <div class="dash-user-meta">
+          <span class="dash-user-name">{{ user.full_name }}</span>
+          <span class="dash-user-email">{{ user.email }}</span>
+        </div>
+      </div>
+      <a href="/logout" class="dash-logout-link">Cerrar sesión</a>
+    </div>
+  </aside>
+
+  <main class="dash-main">
+    <header class="detail-header">
+      <div class="detail-header-left">
+        <a href="/incidents" class="btn-back">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <path d="M12 16L6 10L12 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </a>
+        <div>
+          <div class="detail-code-row">
+            <h1 class="detail-code">{{ incident.code }}</h1>
+            <span class="badge-severity badge-severity-{{ incident.severity.lower() }}">{{ incident.severity }}</span>
+          </div>
+          <p class="detail-title">{{ incident.title }}</p>
+        </div>
+      </div>
+      <div class="detail-header-right">
+        <a href="/incidents/{{ incident.id }}/edit" class="btn-secondary">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path d="M11.5 2.5l2 2L6 12H4v-2l7.5-7.5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Editar
+        </a>
+        <button class="btn-icon">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <circle cx="10" cy="10" r="1.5" fill="currentColor"/>
+            <circle cx="10" cy="4" r="1.5" fill="currentColor"/>
+            <circle cx="10" cy="16" r="1.5" fill="currentColor"/>
+          </svg>
+        </button>
+        <div class="user-avatar-small">{{ user.full_name[0]|upper }}</div>
+      </div>
+    </header>
+
+    <div class="detail-container">
+      <div class="detail-main">
+        <div class="detail-card">
+          <div class="detail-section">
+            <div class="section-header">
+              <div class="section-icon section-icon-blue">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                  <path d="M9 2L2 7V17C2 17.5523 2.44772 18 3 18H7V12H13V18H17C17.5523 18 18 17.5523 18 17V7L11 2H9Z" stroke="currentColor" stroke-width="1.5"/>
+                </svg>
+              </div>
+              <div>
+                <h2 class="section-title">Información básica</h2>
+                <p class="section-subtitle">Contexto y primer contacto</p>
+              </div>
+            </div>
+
+            <div class="detail-grid">
+              <div class="detail-field">
+                <label class="detail-label">Fecha del incidente</label>
+                <div class="detail-value">{{ incident.detected_at.strftime('%d/%m/%Y %H:%M') if incident.detected_at else 'N/A' }}</div>
+              </div>
+
+              <div class="detail-field">
+                <label class="detail-label">Tipo de incidente</label>
+                <div class="detail-value">{{ incident.source }}</div>
+              </div>
+
+              <div class="detail-field">
+                <label class="detail-label">Estado del ciclo</label>
+                <div class="detail-value">
+                  <span class="status-badge status-{{ incident.status.lower().replace(' ', '-') }}">{{ incident.status }}</span>
+                </div>
+              </div>
+
+              <div class="detail-field">
+                <label class="detail-label">Responsable</label>
+                <div class="detail-value">
+                  {% if incident.owner %}
+                  <div class="owner-inline">
+                    <div class="owner-avatar-small">{{ incident.owner[0]|upper }}</div>
+                    <span>{{ incident.owner }}</span>
+                  </div>
+                  {% else %}
+                  <span class="text-muted">Sin asignar</span>
+                  {% endif %}
+                </div>
+              </div>
+
+              <div class="detail-field detail-field-full">
+                <label class="detail-label">Descripción</label>
+                <div class="detail-value detail-description">
+                  {{ incident.description if incident.description else 'Sin descripción proporcionada.' }}
+                </div>
+              </div>
+
+              <div class="detail-field">
+                <label class="detail-label">Última actualización</label>
+                <div class="detail-value">{{ incident.updated_at.strftime('%d/%m/%Y %H:%M') if incident.updated_at else 'N/A' }}</div>
+              </div>
+
+              <div class="detail-field">
+                <label class="detail-label">Confirmación automática del reporte</label>
+                <div class="detail-value">
+                  <span class="badge-auto">Automático hace 3h</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="detail-card">
+          <div class="detail-section">
+            <div class="section-header">
+              <div class="section-icon section-icon-orange">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                  <path d="M10 2L3 8V18H7V12H13V18H17V8L10 2Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+                </svg>
+              </div>
+              <div>
+                <h2 class="section-title">Adjuntar evidencias</h2>
+                <p class="section-subtitle">Archivos que han sido subidos para este incidente</p>
+              </div>
+              <button class="btn-add-small">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <path d="M8 3V13M3 8H13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+                Subir
+              </button>
+            </div>
+
+            <div class="evidence-list">
+              <div class="evidence-item">
+                <div class="evidence-icon evidence-icon-pdf">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                    <path d="M12 2H5C4.44772 2 4 2.44772 4 3V17C4 17.5523 4.44772 18 5 18H15C15.5523 18 16 17.5523 16 17V6L12 2Z" stroke="currentColor" stroke-width="1.5"/>
+                    <path d="M12 2V6H16" stroke="currentColor" stroke-width="1.5"/>
+                  </svg>
+                </div>
+                <div class="evidence-info">
+                  <div class="evidence-name">logs-firewall-masd-d239-2025-12-02.txt</div>
+                  <div class="evidence-meta">2.8 MB · Subido hace 16 h</div>
+                </div>
+                <div class="evidence-actions">
+                  <button class="btn-evidence-action" title="Descargar">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                      <path d="M14 10V13C14 13.5523 13.5523 14 13 14H3C2.44772 14 2 13.5523 2 13V10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                      <path d="M8 2V10M8 10L5 7M8 10L11 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </button>
+                  <button class="btn-evidence-action" title="Eliminar">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                      <path d="M3 4H13M5 4V3C5 2.44772 5.44772 2 6 2H10C10.5523 2 11 2.44772 11 3V4M6.5 7.5V11.5M9.5 7.5V11.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              <div class="evidence-item">
+                <div class="evidence-icon evidence-icon-pdf">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                    <path d="M12 2H5C4.44772 2 4 2.44772 4 3V17C4 17.5523 4.44772 18 5 18H15C15.5523 18 16 17.5523 16 17V6L12 2Z" stroke="currentColor" stroke-width="1.5"/>
+                    <path d="M12 2V6H16" stroke="currentColor" stroke-width="1.5"/>
+                  </svg>
+                </div>
+                <div class="evidence-info">
+                  <div class="evidence-name">informe-edr-endpoint-dffc348b.pdf</div>
+                  <div class="evidence-meta">820 KB · Subido hace 14 h</div>
+                </div>
+                <div class="evidence-actions">
+                  <button class="btn-evidence-action btn-action-success" title="Procesado">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                      <path d="M2 8L6 12L14 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </button>
+                  <button class="btn-evidence-action" title="Descargar">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                      <path d="M14 10V13C14 13.5523 13.5523 14 13 14H3C2.44772 14 2 13.5523 2 13V10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                      <path d="M8 2V10M8 10L5 7M8 10L11 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              <div class="evidence-empty">
+                <p>Arrastra o selecciona más imágenes, logs, screenshots, PCAP, screenshots de alertas o archivos PDF.</p>
+                <span>No incluyas datos personales sin consentimiento en los adjuntos.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="detail-card">
+          <div class="detail-section">
+            <div class="section-header">
+              <div class="section-icon section-icon-green">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                  <path d="M10 2v7m0 0v9m0-9h7m-7 0H3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                </svg>
+              </div>
+              <div>
+                <h2 class="section-title">Confirmación y envío</h2>
+                <p class="section-subtitle">Resumen del estado actual</p>
+              </div>
+            </div>
+
+            <div class="detail-grid">
+              <div class="detail-field">
+                <label class="detail-label">Fecha</label>
+                <div class="detail-value">{{ incident.detected_at.strftime('%d/%m/%Y · %H:%M') if incident.detected_at else 'N/A' }}</div>
+              </div>
+
+              <div class="detail-field">
+                <label class="detail-label">Pendiente de selección</label>
+                <div class="detail-value">
+                  <span class="badge-pending">2 archivos adjuntos</span>
+                </div>
+              </div>
+
+              <div class="detail-field detail-field-full">
+                <label class="detail-label">Alta</label>
+                <div class="detail-value detail-description">
+                  {{ incident.description if incident.description else 'Sin descripción.' }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <aside class="detail-sidebar">
+        <div class="sidebar-card">
+          <div class="sidebar-card-header">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="1.5"/>
+              <path d="M10 6V10L13 13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+            <h3>Timeline de acciones</h3>
+          </div>
+          <div class="timeline">
+            <div class="timeline-item">
+              <div class="timeline-dot timeline-dot-blue"></div>
+              <div class="timeline-content">
+                <div class="timeline-title">Incidente creado</div>
+                <div class="timeline-time">{{ incident.detected_at.strftime('%d/%m/%Y %H:%M') if incident.detected_at else 'N/A' }}</div>
+              </div>
+            </div>
+            <div class="timeline-item">
+              <div class="timeline-dot timeline-dot-orange"></div>
+              <div class="timeline-content">
+                <div class="timeline-title">Asignado a {{ incident.owner if incident.owner else 'Sin asignar' }}</div>
+                <div class="timeline-time">{{ incident.detected_at.strftime('%d/%m/%Y %H:%M') if incident.detected_at else 'N/A' }}</div>
+              </div>
+            </div>
+            <div class="timeline-item">
+              <div class="timeline-dot"></div>
+              <div class="timeline-content">
+                <div class="timeline-title">Última actualización</div>
+                <div class="timeline-time">{{ incident.updated_at.strftime('%d/%m/%Y %H:%M') if incident.updated_at else 'N/A' }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="sidebar-card">
+          <div class="sidebar-card-header">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <path d="M10 2C6 2 3 5 3 9c0 5 7 11 7 11s7-6 7-11c0-4-3-7-7-7z" stroke="currentColor" stroke-width="1.5"/>
+              <circle cx="10" cy="9" r="2" stroke="currentColor" stroke-width="1.5"/>
+            </svg>
+            <h3>Metadatos del incidente</h3>
+          </div>
+          <div class="metadata-list">
+            <div class="metadata-item">
+              <span class="metadata-label">ID:</span>
+              <span class="metadata-value">{{ incident.id }}</span>
+            </div>
+            <div class="metadata-item">
+              <span class="metadata-label">Código:</span>
+              <span class="metadata-value">{{ incident.code }}</span>
+            </div>
+            <div class="metadata-item">
+              <span class="metadata-label">Origen:</span>
+              <span class="metadata-value">{{ incident.source }}</span>
+            </div>
+            <div class="metadata-item">
+              <span class="metadata-label">Severidad:</span>
+              <span class="metadata-value">{{ incident.severity }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="sidebar-card">
+          <div class="sidebar-card-header">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <path d="M10 2v16M2 10h16" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+            <h3>Acciones rápidas</h3>
+          </div>
+          <div class="quick-actions">
+            <a href="/incidents/{{ incident.id }}/edit" class="quick-action-btn">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path d="M11.5 2.5l2 2L6 12H4v-2l7.5-7.5z" stroke="currentColor" stroke-width="1.5"/>
+              </svg>
+              Editar incidente
+            </a>
+            <button class="quick-action-btn" onclick="window.print()">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path d="M4 5V2h8v3M4 11H2V7h12v4h-2M4 11v3h8v-3" stroke="currentColor" stroke-width="1.5"/>
+              </svg>
+              Imprimir informe
+            </button>
+            <button class="quick-action-btn">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path d="M8 2v12M2 8h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+              </svg>
+              Duplicar incidente
+            </button>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </main>
+</div>
+{% endblock %}

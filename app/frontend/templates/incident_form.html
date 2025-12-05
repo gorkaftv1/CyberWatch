@@ -1,0 +1,387 @@
+{% extends "base.html" %}
+
+{% block title %}{% if mode == 'create' %}Nuevo Incidente{% else %}Editar Incidente{% endif %}{% endblock %}
+{% block body_class %}dash-page{% endblock %}
+
+{% block content %}
+<div class="dash-layout">
+  <aside class="dash-sidebar">
+    <div class="dash-sidebar-header">
+      <a href="/dashboard" class="dash-logo-link">
+        <div class="dash-logo">
+          <img src="/static/images/logo.png" alt="CyberWatch Logo" class="dash-logo-img" onerror="this.style.display='none'">
+        </div>
+        <div class="dash-brand">
+          <span class="dash-brand-title">CyberWatch</span>
+          <span class="dash-brand-subtitle">SOC Console</span>
+        </div>
+      </a>
+    </div>
+
+    <nav class="dash-nav">
+      <a href="/dashboard" class="dash-nav-item">
+        <span class="dash-nav-dot"></span>
+        <span>Dashboard</span>
+      </a>
+      <a href="/incidents" class="dash-nav-item dash-nav-item-active">
+        <span class="dash-nav-dot"></span>
+        <span>Incidentes</span>
+      </a>
+      {% if user.role == 'admin' %}
+      <a href="/users" class="dash-nav-item">
+        <span class="dash-nav-dot"></span>
+        <span>Usuarios</span>
+      </a>
+      {% endif %}
+    </nav>
+
+    <div class="dash-sidebar-footer">
+      <div class="dash-user">
+        <div class="dash-user-avatar">{{ user.full_name[0]|upper }}</div>
+        <div class="dash-user-meta">
+          <span class="dash-user-name">{{ user.full_name }}</span>
+          <span class="dash-user-email">{{ user.email }}</span>
+        </div>
+      </div>
+      <a href="/logout" class="dash-logout-link">Cerrar sesión</a>
+    </div>
+  </aside>
+
+  <main class="dash-main">
+    <header class="form-header">
+      <div class="form-header-left">
+        <a href="/incidents" class="btn-back">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <path d="M12 16L6 10L12 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </a>
+        <div>
+          <h1 class="form-title">{% if mode == 'create' %}Nuevo incidente{% else %}Editar incidente{% endif %}</h1>
+          {% if incident %}
+          <p class="form-subtitle">{{ incident.code }}</p>
+          {% else %}
+          <p class="form-subtitle">Rellena los campos obligatorios marcados con *</p>
+          {% endif %}
+        </div>
+      </div>
+      <div class="form-header-right">
+        <button class="btn-icon" id="btnNotifications">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <path d="M10 2C8.34315 2 7 3.34315 7 5V6C7 7.30622 6.16519 8.41746 5 8.82929V15H15V8.82929C13.8348 8.41746 13 7.30622 13 6V5C13 3.34315 11.6569 2 10 2Z" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M8 15V16C8 17.1046 8.89543 18 10 18C11.1046 18 12 17.1046 12 16V15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+        </button>
+        <div class="user-avatar-small">{{ user.full_name[0]|upper }}</div>
+      </div>
+    </header>
+
+    <div class="form-container">
+      <div class="form-main">
+        <div class="form-card">
+          <div class="form-section">
+            <div class="section-header">
+              <div class="section-icon section-icon-blue">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                  <path d="M9 2L2 7V17C2 17.5523 2.44772 18 3 18H7V12H13V18H17C17.5523 18 18 17.5523 18 17V7L11 2H9Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </div>
+              <div>
+                <h2 class="section-title">Información básica</h2>
+                <p class="section-subtitle">Datos del incidente y primer contacto</p>
+              </div>
+            </div>
+
+            <form method="post" action="{% if mode == 'create' %}/incidents/new{% else %}/incidents/{{ incident.id }}/edit{% endif %}" class="form-grid">
+              {% if mode == 'create' %}
+              <div class="form-group">
+                <label for="code" class="form-label">Código del incidente *</label>
+                <input type="text" id="code" name="code" class="form-input" placeholder="INC-2025-0001" required>
+                <span class="form-hint">Formato: INC-YYYY-XXXX</span>
+              </div>
+              {% endif %}
+
+              <div class="form-group">
+                <label for="title" class="form-label">Título *</label>
+                <input type="text" id="title" name="title" class="form-input" placeholder="Breve descripción del incidente" value="{{ incident.title if incident else '' }}" required>
+              </div>
+
+              <div class="form-group">
+                <label for="severity" class="form-label">Severidad inicial *</label>
+                <select id="severity" name="severity" class="form-select" required>
+                  <option value="">Selecciona severidad</option>
+                  <option value="Bajo" {% if incident and incident.severity == 'Bajo' %}selected{% endif %}>🟢 Bajo</option>
+                  <option value="Medio" {% if incident and incident.severity == 'Medio' %}selected{% endif %}>🟡 Medio</option>
+                  <option value="Alto" {% if incident and incident.severity == 'Alto' %}selected{% endif %}>🟠 Alto</option>
+                  <option value="Crítico" {% if incident and incident.severity == 'Crítico' %}selected{% endif %}>🔴 Crítico</option>
+                </select>
+                <span class="form-hint">Evalúa el impacto potencial</span>
+              </div>
+
+              <div class="form-group">
+                <label for="status" class="form-label">Estado *</label>
+                <select id="status" name="status" class="form-select" required>
+                  <option value="">Selecciona estado</option>
+                  <option value="Abierto" {% if incident and incident.status == 'Abierto' %}selected{% endif %}>Abierto</option>
+                  <option value="En investigación" {% if incident and incident.status == 'En investigación' %}selected{% endif %}>En investigación</option>
+                  <option value="Asignado" {% if incident and incident.status == 'Asignado' %}selected{% endif %}>Asignado</option>
+                  <option value="Mitigado" {% if incident and incident.status == 'Mitigado' %}selected{% endif %}>Mitigado</option>
+                  <option value="Cerrado" {% if incident and incident.status == 'Cerrado' %}selected{% endif %}>Cerrado</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="source" class="form-label">Origen de detección *</label>
+                <select id="source" name="source" class="form-select" required>
+                  <option value="">Selecciona origen</option>
+                  <option value="EDR" {% if incident and incident.source == 'EDR' %}selected{% endif %}>EDR</option>
+                  <option value="Firewall" {% if incident and incident.source == 'Firewall' %}selected{% endif %}>Firewall</option>
+                  <option value="SIEM" {% if incident and incident.source == 'SIEM' %}selected{% endif %}>SIEM</option>
+                  <option value="Alerta SIEM" {% if incident and incident.source == 'Alerta SIEM' %}selected{% endif %}>Alerta SIEM</option>
+                  <option value="Correo" {% if incident and incident.source == 'Correo' %}selected{% endif %}>Correo</option>
+                  <option value="Usuario" {% if incident and incident.source == 'Usuario' %}selected{% endif %}>Usuario</option>
+                  <option value="Detección automática" {% if incident and incident.source == 'Detección automática' %}selected{% endif %}>Detección automática</option>
+                  {% for src in sources %}
+                  {% if src not in ['EDR', 'Firewall', 'SIEM', 'Alerta SIEM', 'Correo', 'Usuario', 'Detección automática'] %}
+                  <option value="{{ src }}" {% if incident and incident.source == src %}selected{% endif %}>{{ src }}</option>
+                  {% endif %}
+                  {% endfor %}
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="owner" class="form-label">Responsable</label>
+                <select id="owner" name="owner" class="form-select">
+                  <option value="">Sin asignar</option>
+                  {% for analyst in analysts %}
+                  <option value="{{ analyst.full_name }}" {% if incident and incident.owner == analyst.full_name %}selected{% endif %}>
+                    {{ analyst.full_name }} ({{ analyst.email }})
+                  </option>
+                  {% endfor %}
+                </select>
+                <span class="form-hint">Deja vacío si aún no está asignado</span>
+              </div>
+
+              <div class="form-group form-group-full">
+                <label for="description" class="form-label">Descripción</label>
+                <textarea id="description" name="description" class="form-textarea" rows="6" placeholder="Detalla aquí el comportamiento observado, sistemas afectados y cualquier indicador relevante (IPs, hashes, usuarios, etc.)">{{ incident.description if incident else '' }}</textarea>
+                <span class="form-hint">La descripción debe tener al menos 30 caracteres</span>
+              </div>
+
+              <div class="form-actions">
+                <a href="/incidents" class="btn-secondary">Cancelar</a>
+                <button type="submit" class="btn-primary">
+                  {% if mode == 'create' %}
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <path d="M8 3V13M3 8H13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  </svg>
+                  Crear incidente
+                  {% else %}
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <path d="M2 8L6 12L14 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                  Guardar cambios
+                  {% endif %}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        {% if incident %}
+        <div class="danger-zone">
+          <div class="danger-zone-header">
+            <div>
+              <h3 class="danger-zone-title">Zona de peligro</h3>
+              <p class="danger-zone-subtitle">Acciones irreversibles</p>
+            </div>
+          </div>
+          <button type="button" class="btn-danger" onclick="showDeleteModal()">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path d="M3 4H13M5 4V3C5 2.44772 5.44772 2 6 2H10C10.5523 2 11 2.44772 11 3V4M6.5 7.5V11.5M9.5 7.5V11.5M4 4H12V13C12 13.5523 11.5523 14 11 14H5C4.44772 14 4 13.5523 4 13V4Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            Eliminar incidente
+          </button>
+        </div>
+        {% endif %}
+      </div>
+
+      <aside class="form-sidebar">
+        <div class="sidebar-card">
+          <div class="sidebar-card-header">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="1.5"/>
+              <path d="M10 6V10L13 13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+            <h3>Reglas de incidentes</h3>
+          </div>
+          <ul class="sidebar-list">
+            <li>Revisa los campos obligatorios marcados con *</li>
+            <li>Completa la descripción antes de continuar</li>
+            <li>La severidad y el estado se pueden modificar después</li>
+            <li>Asigna responsable según disponibilidad</li>
+          </ul>
+        </div>
+
+        <div class="sidebar-card">
+          <div class="sidebar-card-header">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <path d="M9 2L2 7V17C2 17.5523 2.44772 18 3 18H7V12H13V18H17C17.5523 18 18 17.5523 18 17V7L11 2H9Z" stroke="currentColor" stroke-width="1.5"/>
+            </svg>
+            <h3>{% if mode == 'create' %}Registro guiado{% else %}Confirmación y envío{% endif %}</h3>
+          </div>
+          <p class="sidebar-text">
+            {% if mode == 'create' %}
+            Estamos guiando el registro de un nuevo incidente. Completa todos los campos para asegurar un seguimiento adecuado.
+            {% else %}
+            Los cambios se aplicarán inmediatamente. El incidente se actualizará y se notificará a los responsables si corresponde.
+            {% endif %}
+          </p>
+        </div>
+
+        {% if incident %}
+        <div class="sidebar-card">
+          <div class="sidebar-card-header">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <path d="M3 3H17V17H3V3Z" stroke="currentColor" stroke-width="1.5"/>
+              <path d="M6 7H14M6 10H14M6 13H10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+            <h3>Logs del incidente</h3>
+          </div>
+          <form method="post" action="/incidents/{{ incident.id }}/upload-attachment" enctype="multipart/form-data" class="upload-form">
+            <div class="form-group">
+              <label for="attachment" class="form-label">Archivo de logs (.txt)</label>
+              <input type="file" id="attachment" name="attachment" accept=".txt" class="form-input" required>
+              <span class="form-hint">Sube archivos de logs en formato .txt</span>
+            </div>
+            <button type="submit" class="btn-primary" style="width: 100%;">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path d="M14 10V13C14 13.5523 13.5523 14 13 14H3C2.44772 14 2 13.5523 2 13V10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                <path d="M8 2V10M8 10L5 7M8 10L11 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              Subir logs
+            </button>
+          </form>
+          
+          {% if attachments %}
+          <div class="attachments-list" style="margin-top: 16px;">
+            <h4 style="font-size: 0.875rem; font-weight: 600; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <path d="M2 2H12V12H2V2Z" stroke="currentColor" stroke-width="1.2"/>
+                <path d="M4 5H10M4 7H10M4 9H7" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+              </svg>
+              Logs adjuntos:
+            </h4>
+            {% for att in attachments %}
+            <div class="attachment-item" style="margin-bottom: 8px; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; overflow: hidden;">
+              <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: rgba(255,255,255,0.05);">
+                <div style="flex: 1;">
+                  <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                      <path d="M4 2H12L14 4V14H4V2Z" stroke="#10b981" stroke-width="1.5"/>
+                      <path d="M6 6H10M6 9H10M6 12H8" stroke="#10b981" stroke-width="1.2" stroke-linecap="round"/>
+                    </svg>
+                    <span style="font-size: 0.875rem; font-weight: 500;">{{ att.filename }}</span>
+                  </div>
+                  <small style="display: block; color: rgba(255,255,255,0.5); font-size: 0.75rem; padding-left: 24px;">
+                    📅 {{ att.uploaded_at.strftime('%d/%m/%Y %H:%M') }} • {{ att.content.count('\n') + 1 }} líneas
+                  </small>
+                </div>
+                <div style="display: flex; gap: 4px;">
+                  <button type="button" class="btn-icon" style="color: #3b82f6;" onclick="toggleLogContent('log-{{ att.id }}')" title="Ver contenido">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                      <path d="M8 3C4.5 3 2 8 2 8s2.5 5 6 5 6-5 6-5-2.5-5-6-5z" stroke="currentColor" stroke-width="1.5"/>
+                      <circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/>
+                    </svg>
+                  </button>
+                  <form method="post" action="/incidents/{{ incident.id }}/delete-attachment/{{ att.id }}" id="deleteLogForm{{ att.id }}" style="display: inline;">
+                    <button type="button" class="btn-icon" style="color: #ef4444;" onclick="if(confirm('¿Eliminar este log?')) document.getElementById('deleteLogForm{{ att.id }}').submit();" title="Eliminar">
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                        <path d="M3 4H13M5 4V3C5 2.44772 5.44772 2 6 2H10C10.5523 2 11 2.44772 11 3V4M6.5 7.5V11.5M9.5 7.5V11.5M4 4H12V13C12 13.5523 11.5523 14 11 14H5C4.44772 14 4 13.5523 4 13V4Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                    </button>
+                  </form>
+                </div>
+              </div>
+              <div id="log-{{ att.id }}" style="display: none; padding: 12px; background: #1a1a1a; border-top: 1px solid rgba(255,255,255,0.1); max-height: 300px; overflow-y: auto;">
+                <pre style="margin: 0; font-family: 'Courier New', monospace; font-size: 0.75rem; line-height: 1.5; color: #d4d4d4; white-space: pre-wrap; word-wrap: break-word;">{{ att.content }}</pre>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+          {% endif %}
+        </div>
+        {% endif %}
+      </aside>
+    </div>
+  </main>
+</div>
+
+<!-- Modal de confirmación de eliminación -->
+<div id="deleteModal" class="modal-overlay" style="display: none;">
+  <div class="modal-container">
+    <div class="modal-header">
+      <div class="modal-icon modal-icon-danger">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+          <path d="M12 9V13M12 17H12.01M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <h3 class="modal-title">Eliminar incidente</h3>
+      <p class="modal-subtitle">Esta acción no se puede deshacer</p>
+    </div>
+    
+    <div class="modal-body">
+      <p class="modal-text">
+        ¿Estás seguro de que deseas eliminar este incidente?
+        {% if incident %}
+        <strong>{{ incident.code }}</strong>
+        {% endif %}
+      </p>
+      <div class="modal-warning">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path d="M8 5V9M8 11H8.01M14 8C14 11.3137 11.3137 14 8 14C4.68629 14 2 11.3137 2 8C2 4.68629 4.68629 2 8 2C11.3137 2 14 4.68629 14 8Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span>Se eliminarán todos los logs y evidencias asociadas</span>
+      </div>
+    </div>
+    
+    <div class="modal-footer">
+      <button type="button" class="btn-secondary" onclick="closeDeleteModal()">Cancelar</button>
+      <form method="post" action="/incidents/{{ incident.id }}/delete" style="display: inline;">
+        <button type="submit" class="btn-danger">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path d="M3 4H13M5 4V3C5 2.44772 5.44772 2 6 2H10C10.5523 2 11 2.44772 11 3V4M6.5 7.5V11.5M9.5 7.5V11.5M4 4H12V13C12 13.5523 11.5523 14 11 14H5C4.44772 14 4 13.5523 4 13V4Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Sí, eliminar
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+function toggleLogContent(logId) {
+  const logElement = document.getElementById(logId);
+  if (logElement) {
+    logElement.style.display = logElement.style.display === 'none' ? 'block' : 'none';
+  }
+}
+
+function showDeleteModal() {
+  document.getElementById('deleteModal').style.display = 'flex';
+  document.body.style.overflow = 'hidden'; // Bloquear scroll
+}
+
+function closeDeleteModal() {
+  document.getElementById('deleteModal').style.display = 'none';
+  document.body.style.overflow = ''; // Restaurar scroll
+}
+
+// Cerrar modal con ESC
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    closeDeleteModal();
+  }
+});
+</script>
+
+{% endblock %}
