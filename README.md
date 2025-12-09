@@ -346,20 +346,6 @@ python migrate_passwords.py
 python -m uvicorn app.main:app --reload
 ```
 
-### Variables de Entorno (Opcional)
-Puedes configurar variables de entorno para personalizar la aplicación:
-- `DATABASE_URL`: URL de conexión a la base de datos
-- `SECRET_KEY`: Clave secreta para sesiones
-- `DEBUG`: Modo debug (true/false)
-
 ## 👥 Autores
 
-- **Equipo CyberWatch** - Desarrollo inicial
-
-## 📞 Contacto
-
-Para preguntas o soporte, por favor abre un issue en el repositorio.
-
----
-
-**CyberWatch** - Gestión profesional de incidentes de ciberseguridad 🛡️
+- **Grupo 6 - SIO (GII)**: Eduardo Marrero Gonzalez, Jaime Calzada Sánchez, Gorka Eymard Santana Cabrera 
