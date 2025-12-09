@@ -1,8 +1,12 @@
 # CyberWatch - Sistema de Gestión de Incidentes de Seguridad
 
+## ⚠️ Estado del Proyecto: DEMO en Desarrollo
+
+> **Nota Importante**: Este proyecto es una **demostración en desarrollo** creada con fines educativos. No está destinado para uso en producción. La base de datos utiliza SQLite en modo desarrollo y las configuraciones están optimizadas para facilitar el desarrollo y testing.
+
 ## 📋 Descripción
 
-CyberWatch es una aplicación web profesional para la gestión de incidentes de ciberseguridad, diseñada para equipos SOC (Security Operations Center). Permite el registro, seguimiento, asignación y análisis de incidentes de seguridad de manera eficiente y organizada, con un sistema robusto de gestión de logs, autenticación segura y modales personalizados para una experiencia de usuario profesional.
+CyberWatch es una aplicación web demo para la gestión de incidentes de ciberseguridad, diseñada para demostrar conceptos de equipos SOC (Security Operations Center). Permite el registro, seguimiento, asignación y análisis de incidentes de seguridad de manera eficiente y organizada, con un sistema robusto de gestión de logs, autenticación segura y modales personalizados para una experiencia de usuario profesional.
 
 ## 🚀 Tecnologías Utilizadas
 
@@ -21,8 +25,9 @@ CyberWatch es una aplicación web profesional para la gestión de incidentes de 
 - **Sistema de modales personalizados** - Confirmaciones profesionales con animaciones
 
 ### Base de Datos
-- **SQLite** - Base de datos relacional embebida (por defecto)
-- Compatible con PostgreSQL, MySQL u otros motores SQL
+- **SQLite** - Base de datos relacional embebida para desarrollo y demo
+- ⚠️ **Nota**: En producción se recomienda usar PostgreSQL o MySQL
+- Compatible con PostgreSQL, MySQL u otros motores SQL mediante SQLModel
 
 ## 📊 Estructura de la Base de Datos
 
@@ -158,13 +163,19 @@ pip install fastapi uvicorn[standard] sqlmodel passlib[bcrypt] python-multipart 
 
 ## 🚀 Ejecución
 
-### Iniciar el servidor de desarrollo
+### Entorno de Desarrollo/Demo
+
+Este proyecto está configurado para ejecutarse en modo desarrollo. La base de datos SQLite se crea automáticamente en la primera ejecución.
+
+**Iniciar el servidor de desarrollo:**
 
 ```bash
 python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
 La aplicación estará disponible en: `http://localhost:8000`
+
+> **Nota**: El flag `--reload` reinicia automáticamente el servidor cuando detecta cambios en el código, ideal para desarrollo.
 
 ### Crear usuarios iniciales
 
@@ -292,6 +303,10 @@ python create_incidents.py
 
 ## 🔒 Seguridad
 
+### ⚠️ Configuración de Desarrollo/Demo
+Este proyecto utiliza configuraciones de seguridad básicas apropiadas para desarrollo y demostración. Para un entorno de producción, se requieren mejoras adicionales:
+
+**Implementado (Demo):**
 - **Contraseñas hasheadas con bcrypt** (factor de trabajo 12, bcrypt 4.0.1)
 - **Migración automática de contraseñas antiguas**: Sistema transparente que convierte contraseñas en texto plano a bcrypt en el primer login
 - **Truncamiento automático de contraseñas a 72 bytes**: Garantiza compatibilidad con bcrypt
@@ -301,6 +316,14 @@ python create_incidents.py
 - Sesiones seguras con cookies HttpOnly
 - Protección CSRF en formularios
 - **Archivos de log**: Solo acepta archivos .txt, almacenados como texto plano en base de datos
+
+**Pendiente para Producción:**
+- SECRET_KEY debe ser generada y almacenada de forma segura (variables de entorno)
+- HTTPS/TLS en todas las comunicaciones
+- Rate limiting y protección contra fuerza bruta
+- Logging y monitorización de seguridad
+- Backups automáticos de base de datos
+- Hardening del servidor y la aplicación
 
 ## 📈 Características Técnicas
 
@@ -322,21 +345,21 @@ python create_incidents.py
 - Preparado para caché (Redis)
 - Posibilidad de API REST completa
 
-## 🛠️ Desarrollo
+## 🛠️ Desarrollo y Testing
 
-### Scripts Útiles
+### Scripts Útiles para Demo
 
-**Crear usuario:**
+**Crear usuario de prueba:**
 ```bash
 python create_user.py
 ```
 
-**Crear incidentes de prueba:**
+**Poblar con incidentes de ejemplo:**
 ```bash
 python create_incidents.py
 ```
 
-**Migrar contraseñas a bcrypt:**
+**Migrar contraseñas a bcrypt (si necesario):**
 ```bash
 python migrate_passwords.py
 ```
@@ -345,6 +368,13 @@ python migrate_passwords.py
 ```bash
 python -m uvicorn app.main:app --reload
 ```
+
+### Recomendaciones de Desarrollo
+
+1. **Base de datos**: El archivo `cyberwatch.db` se genera automáticamente. Puedes eliminarlo para resetear la demo.
+2. **Logs**: Revisa la salida de consola para información de depuración.
+3. **Hot reload**: Los cambios en el código se reflejan automáticamente con `--reload`.
+4. **Testing**: Usa usuarios y datos de prueba, nunca información real o sensible.
 
 ## 👥 Autores
 
