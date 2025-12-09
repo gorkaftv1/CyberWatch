@@ -51,14 +51,14 @@
     <header class="incidents-header">
       <div class="incidents-header-left">
         <h1 class="incidents-title">Incidentes</h1>
-        <span class="incidents-subtitle">12 nuevos en las últimas 24h</span>
+        <span class="incidents-subtitle">nuevos en las últimas 24h</span>
       </div>
       <div class="incidents-header-right">
         <div class="search-box">
           <input type="text" placeholder="Buscar en todos los campos..." id="searchInput" value="{{ filters.search or '' }}">
         </div>
         <button class="btn-filter" id="btnToggleFilters">
-          <span>Últimas 24h</span>
+          <span>Filtros</span>
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
             <path d="M4 6L8 10L12 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
           </svg>
@@ -130,7 +130,7 @@
               {% for inc in incidents %}
               <tr>
                 <td>
-                  <a href="/incidents/{{ inc.id }}" class="incident-code">{{ inc.code }}</a>
+                  <a href="/incidents/{{ inc.id }}?page={{ page }}&per_page={{ per_page }}{% if filters.severity %}&severity={{ filters.severity }}{% endif %}{% if filters.status %}&status={{ filters.status }}{% endif %}{% if filters.source %}&source={{ filters.source }}{% endif %}{% if filters.owner %}&owner={{ filters.owner }}{% endif %}{% if filters.search %}&search={{ filters.search }}{% endif %}" class="incident-code">{{ inc.code }}</a>
                 </td>
                 <td>
                   <div class="incident-date">
@@ -178,13 +178,13 @@
                 </td>
                 <td>
                   <div class="incident-actions">
-                    <a href="/incidents/{{ inc.id }}" class="action-btn" title="Ver detalle">
+                    <a href="/incidents/{{ inc.id }}?page={{ page }}&per_page={{ per_page }}{% if filters.severity %}&severity={{ filters.severity }}{% endif %}{% if filters.status %}&status={{ filters.status }}{% endif %}{% if filters.source %}&source={{ filters.source }}{% endif %}{% if filters.owner %}&owner={{ filters.owner }}{% endif %}{% if filters.search %}&search={{ filters.search }}{% endif %}" class="action-btn" title="Ver detalle">
                       <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                         <path d="M8 3C4.5 3 2 8 2 8s2.5 5 6 5 6-5 6-5-2.5-5-6-5z" stroke="currentColor" stroke-width="1.5"/>
                         <circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/>
                       </svg>
                     </a>
-                    <a href="/incidents/{{ inc.id }}/edit" class="action-btn" title="Editar">
+                    <a href="/incidents/{{ inc.id }}/edit?page={{ page }}&per_page={{ per_page }}{% if filters.severity %}&severity={{ filters.severity }}{% endif %}{% if filters.status %}&status={{ filters.status }}{% endif %}{% if filters.source %}&source={{ filters.source }}{% endif %}{% if filters.owner %}&owner={{ filters.owner }}{% endif %}{% if filters.search %}&search={{ filters.search }}{% endif %}" class="action-btn" title="Editar">
                       <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                         <path d="M11.5 2.5l2 2L6 12H4v-2l7.5-7.5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
                       </svg>
@@ -326,6 +326,7 @@
             <label class="filter-label">Responsable</label>
             <select name="owner" class="filter-select">
               <option value="">Todos los analistas</option>
+              <option value="__unassigned__" {% if filters.owner == '__unassigned__' %}selected{% endif %}>Sin asignar</option>
               {% for owner in owners %}
               <option value="{{ owner }}" {% if filters.owner == owner %}selected{% endif %}>{{ owner }}</option>
               {% endfor %}

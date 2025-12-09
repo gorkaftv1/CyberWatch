@@ -50,7 +50,7 @@
   <main class="dash-main">
     <header class="detail-header">
       <div class="detail-header-left">
-        <a href="/incidents" class="btn-back">
+        <a href="/incidents?page={{ return_params.page }}&per_page={{ return_params.per_page }}{% if return_params.severity %}&severity={{ return_params.severity }}{% endif %}{% if return_params.status %}&status={{ return_params.status }}{% endif %}{% if return_params.source %}&source={{ return_params.source }}{% endif %}{% if return_params.owner %}&owner={{ return_params.owner }}{% endif %}{% if return_params.search %}&search={{ return_params.search }}{% endif %}" class="btn-back">
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
             <path d="M12 16L6 10L12 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
@@ -64,7 +64,7 @@
         </div>
       </div>
       <div class="detail-header-right">
-        <a href="/incidents/{{ incident.id }}/edit" class="btn-secondary">
+        <a href="/incidents/{{ incident.id }}/edit?page={{ return_params.page }}&per_page={{ return_params.per_page }}{% if return_params.severity %}&severity={{ return_params.severity }}{% endif %}{% if return_params.status %}&status={{ return_params.status }}{% endif %}{% if return_params.source %}&source={{ return_params.source }}{% endif %}{% if return_params.owner %}&owner={{ return_params.owner }}{% endif %}{% if return_params.search %}&search={{ return_params.search }}{% endif %}" class="btn-secondary">
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
             <path d="M11.5 2.5l2 2L6 12H4v-2l7.5-7.5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>

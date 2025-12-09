@@ -62,3 +62,8 @@ class UserRepository:
         """Obtiene todos los analistas activos del sistema"""
         statement = select(User).where(User.is_active == True).order_by(User.full_name)
         return list(self.session.exec(statement).all())
+    
+    def get_active_users(self) -> List[User]:
+        """Obtiene todos los usuarios activos del sistema"""
+        statement = select(User).where(User.is_active == True).order_by(User.full_name)
+        return list(self.session.exec(statement).all())

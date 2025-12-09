@@ -49,10 +49,18 @@ async def list_incidents(
     if user.role == 'analyst' and owner is None:
         owner = user.full_name
     
+    # Manejar filtro especial de "sin asignar"
+    filter_unassigned = False
+    if owner == "__unassigned__":
+        filter_unassigned = True
+        owner = None  # Para que el repositorio busque incidentes sin owner
+    
     if search:
         incidents = repo.search(search)
         # Filtrar por owner si está establecido
-        if owner:
+        if filter_unassigned:
+            incidents = [inc for inc in incidents if inc.owner is None]
+        elif owner:
             incidents = [inc for inc in incidents if inc.owner == owner]
         total_incidents = len(incidents)
         incidents = incidents[offset:offset + per_page]
@@ -63,6 +71,7 @@ async def list_incidents(
             status=status,
             source=source,
             owner=owner,
+            filter_unassigned=filter_unassigned,
         )
         
         incidents = repo.get_all(
@@ -70,6 +79,7 @@ async def list_incidents(
             status=status,
             source=source,
             owner=owner,
+            filter_unassigned=filter_unassigned,
             limit=per_page,
             offset=offset,
         )
@@ -81,7 +91,14 @@ async def list_incidents(
     severities = repo.get_unique_values("severity")
     statuses = repo.get_unique_values("status")
     sources = repo.get_unique_values("source")
-    owners = repo.get_unique_values("owner")
+    
+    # Obtener usuarios activos para el filtro de responsables
+    user_repo = UserRepository(session)
+    active_users = user_repo.get_active_users()
+    owners = [u.full_name for u in active_users]
+    
+    # Preparar el valor de owner para el template
+    owner_filter_value = "__unassigned__" if filter_unassigned else owner
     
     return templates.TemplateResponse(
         "incidents.html",
@@ -102,7 +119,7 @@ async def list_incidents(
                 "severity": severity,
                 "status": status,
                 "source": source,
-                "owner": owner,
+                "owner": owner_filter_value,
                 "search": search,
             }
         },
@@ -174,6 +191,13 @@ async def create_incident(
 async def view_incident(
     request: Request,
     incident_id: int,
+    page: int = 1,
+    per_page: int = 25,
+    severity: Optional[str] = None,
+    status: Optional[str] = None,
+    source: Optional[str] = None,
+    owner: Optional[str] = None,
+    search: Optional[str] = None,
     user: User = Depends(get_current_user),
     session: Session = Depends(get_session),
 ):
@@ -198,6 +222,15 @@ async def view_incident(
             "user": user,
             "incident": incident,
             "attachments": attachments,
+            "return_params": {
+                "page": page,
+                "per_page": per_page,
+                "severity": severity,
+                "status": status,
+                "source": source,
+                "owner": owner,
+                "search": search,
+            },
         },
     )
 
@@ -282,6 +315,7 @@ async def update_incident(
 @router.post("/{incident_id}/delete")
 async def delete_incident(
     incident_id: int,
+    request: Request,
     user: User = Depends(get_current_user),
     session: Session = Depends(get_session),
 ):
@@ -296,7 +330,19 @@ async def delete_incident(
             detail="Incidente no encontrado"
         )
     
-    return RedirectResponse(url="/incidents", status_code=http_status.HTTP_303_SEE_OTHER)
+    # Obtener parámetros de retorno del referer o form data
+    referer = request.headers.get('referer', '')
+    
+    # Intentar extraer parámetros de la URL de origen
+    if 'page=' in referer or 'per_page=' in referer:
+        # Preservar los parámetros de la URL original
+        from urllib.parse import urlparse, parse_qs
+        parsed = urlparse(referer)
+        return_url = f"/incidents?{parsed.query}" if parsed.query else "/incidents"
+    else:
+        return_url = "/incidents"
+    
+    return RedirectResponse(url=return_url, status_code=http_status.HTTP_303_SEE_OTHER)
 
 
 @router.get("/export/csv")

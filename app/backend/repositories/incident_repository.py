@@ -41,6 +41,7 @@ class IncidentRepository:
         status: Optional[str] = None,
         source: Optional[str] = None,
         owner: Optional[str] = None,
+        filter_unassigned: bool = False,
         limit: Optional[int] = None,
         offset: Optional[int] = 0,
     ) -> list[Incident]:
@@ -53,7 +54,9 @@ class IncidentRepository:
             statement = statement.where(Incident.status == status)
         if source:
             statement = statement.where(Incident.source == source)
-        if owner:
+        if filter_unassigned:
+            statement = statement.where(Incident.owner == None)
+        elif owner:
             statement = statement.where(Incident.owner == owner)
 
         statement = statement.order_by(Incident.detected_at.desc())
@@ -117,6 +120,7 @@ class IncidentRepository:
         status: Optional[str] = None,
         source: Optional[str] = None,
         owner: Optional[str] = None,
+        filter_unassigned: bool = False,
     ) -> int:
         """Contar incidentes con filtros opcionales"""
         statement = select(Incident)
@@ -127,7 +131,9 @@ class IncidentRepository:
             statement = statement.where(Incident.status == status)
         if source:
             statement = statement.where(Incident.source == source)
-        if owner:
+        if filter_unassigned:
+            statement = statement.where(Incident.owner == None)
+        elif owner:
             statement = statement.where(Incident.owner == owner)
 
         return len(list(self.session.exec(statement).all()))
