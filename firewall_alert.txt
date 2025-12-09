@@ -1,0 +1,14 @@
+2025-12-09 14:32:15 [ALERT] Firewall Rule Violation
+Source IP: 192.168.1.105
+Destination IP: 10.0.0.50
+Port: 445 (SMB)
+Action: BLOCKED
+Rule ID: FW-2301
+Attempts: 15 in last 5 minutes
+Severity: HIGH
+Description: Multiple failed SMB connection attempts from internal host
+Recommendation: Investigate potential lateral movement
+Protocol: TCP
+User: WORKSTATION\jdoe
+Timestamp: 2025-12-09T14:32:15Z
+Firewall Zone: Internal -> DMZ

@@ -1,0 +1,65 @@
+2025-12-09 16:12:08 [WARNING] SIEM Correlation Event
+=======================================================
+Event ID: CORR-89432
+Correlation Name: Brute Force Attack Pattern Detected
+Confidence Level: 95%
+Risk Score: 8.5/10
+
+Target Account:
+---------------
+Username: admin@company.local
+Account Type: Domain Administrator
+Last Legitimate Login: 2025-12-08 09:15:23
+Account Status: Active
+
+Attack Timeline:
+----------------
+Start Time: 2025-12-09 15:58:12
+End Time: 2025-12-09 16:10:45
+Total Duration: 12 minutes 33 seconds
+Total Login Attempts: 47
+Failed Attempts: 46
+Successful Attempts: 1
+
+Source Analysis:
+----------------
+Source IP 1: 203.0.113.45 (Russia) - 15 attempts
+Source IP 2: 198.51.100.67 (China) - 18 attempts
+Source IP 3: 192.0.2.89 (USA) - 14 attempts
+Pattern: Distributed attack, likely VPN/proxy usage
+
+Authentication Methods Attempted:
+----------------------------------
+- NTLM: 32 attempts (Failed)
+- Kerberos: 14 attempts (Failed)
+- LDAP: 1 attempt (Success)
+
+Successful Login Details:
+--------------------------
+Timestamp: 2025-12-09 16:10:45
+Source IP: 192.0.2.89
+User Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64)
+Session ID: SID-7B9C3D2E
+Access Level: Full Administrative Rights
+
+Post-Authentication Activity:
+------------------------------
+- User enumeration commands executed
+- Lateral movement to 3 workstations detected
+- Attempted access to sensitive file shares
+- PowerShell history cleared
+
+Recommendations:
+----------------
+1. IMMEDIATE: Force password reset for admin@company.local
+2. CRITICAL: Enable MFA on all administrator accounts
+3. HIGH: Review and revoke current session (SID-7B9C3D2E)
+4. MEDIUM: Implement account lockout policies
+5. LOW: Review firewall rules for suspicious IPs
+
+Related Events:
+---------------
+- Event 4625: Multiple failed logon attempts
+- Event 4624: Successful account logon
+- Event 4648: Logon using explicit credentials
+- Event 4672: Special privileges assigned to new logon

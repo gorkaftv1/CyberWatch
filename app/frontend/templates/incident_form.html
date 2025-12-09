@@ -60,7 +60,7 @@
           {% if incident %}
           <p class="form-subtitle">{{ incident.code }}</p>
           {% else %}
-          <p class="form-subtitle">Rellena los campos obligatorios marcados con *</p>
+          <p class="form-subtitle">El código se generará automáticamente (INC-YYYY-XXXX)</p>
           {% endif %}
         </div>
       </div>
@@ -92,11 +92,11 @@
             </div>
 
             <form method="post" action="{% if mode == 'create' %}/incidents/new{% else %}/incidents/{{ incident.id }}/edit{% endif %}" class="form-grid">
-              {% if mode == 'create' %}
+              {% if mode == 'edit' %}
               <div class="form-group">
-                <label for="code" class="form-label">Código del incidente *</label>
-                <input type="text" id="code" name="code" class="form-input" placeholder="INC-2025-0001" required>
-                <span class="form-hint">Formato: INC-YYYY-XXXX</span>
+                <label for="code" class="form-label">Código del incidente</label>
+                <input type="text" id="code" name="code" class="form-input" value="{{ incident.code }}" disabled>
+                <span class="form-hint">Generado automáticamente</span>
               </div>
               {% endif %}
 
