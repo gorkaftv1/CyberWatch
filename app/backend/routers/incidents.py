@@ -468,7 +468,7 @@ async def upload_attachment(
     return RedirectResponse(url=f"/incidents/{incident_id}/edit", status_code=303)
 
 
-@router.post("/{incident_id}/attachments/{attachment_id}/delete")
+@router.post("/{incident_id}/delete-attachment/{attachment_id}")
 async def delete_attachment(
     incident_id: int,
     attachment_id: int,
@@ -482,7 +482,7 @@ async def delete_attachment(
     attachment = attachment_repo.get_by_id(attachment_id)
     if not attachment or attachment.incident_id != incident_id:
         return RedirectResponse(
-            url=f"/incidents/{incident_id}?error=Log+no+encontrado",
+            url=f"/incidents/{incident_id}/edit",
             status_code=303
         )
     
@@ -498,8 +498,7 @@ async def delete_attachment(
         session.commit()
     
     return RedirectResponse(
-        url=f"/incidents/{incident_id}?success=Log+'{filename}'+eliminado+correctamente",
+        url=f"/incidents/{incident_id}/edit",
         status_code=303
     )
-    
-    return RedirectResponse(url="/incidents", status_code=303)
+

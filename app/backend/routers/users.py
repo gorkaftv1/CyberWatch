@@ -3,6 +3,7 @@ from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 from app.backend.dependencies.auth import get_current_user
 from app.backend.repositories.user_repository import UserRepository
+from app.backend.repositories.incident_repository import IncidentRepository
 from app.backend.database import get_session
 from sqlmodel import Session
 from app.backend.models.user import User
@@ -142,9 +143,9 @@ async def update_user(
     # Solo actualizar password si se proporciona uno nuevo
     if password and password.strip():
         # Truncar password a 72 bytes (limitación de bcrypt)
-        password_bytes = new_password.encode('utf-8')
+        password_bytes = password.encode('utf-8')
         if len(password_bytes) > BCRYPT_MAX_PASSWORD_LENGTH:
-            new_password = password_bytes[:BCRYPT_MAX_PASSWORD_LENGTH].decode('utf-8', errors='ignore')
+            password = password_bytes[:BCRYPT_MAX_PASSWORD_LENGTH].decode('utf-8', errors='ignore')
         edit_user.password = pwd_context.hash(password)
     
     user_repo.update(edit_user)
@@ -156,15 +157,31 @@ async def delete_user(
     user: User = Depends(require_admin),
     session: Session = Depends(get_session)
 ):
-    """Elimina un usuario"""
+    """Elimina un usuario y libera sus incidentes abiertos"""
     user_repo = UserRepository(session)
+    incident_repo = IncidentRepository(session)
     
     # No permitir que un admin se elimine a sí mismo
     if user.id == user_id:
         raise HTTPException(status_code=400, detail="No puedes eliminar tu propio usuario")
     
+    # Obtener el usuario a eliminar
+    user_to_delete = user_repo.get_by_id(user_id)
+    if not user_to_delete:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    
+    # Liberar incidentes abiertos/activos (owner = None)
+    # Los incidentes cerrados mantienen el nombre del owner para filtros históricos
+    open_statuses = ["Abierto", "En Investigación", "En Progreso", "Pendiente"]
+    all_incidents = incident_repo.get_all()
+    
+    for incident in all_incidents:
+        if incident.owner == user_to_delete.full_name and incident.status in open_statuses:
+            incident_repo.update(incident.id, {"owner": None})
+    
+    # Eliminar el usuario
     success = user_repo.delete(user_id)
     if not success:
-        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+        raise HTTPException(status_code=404, detail="Error al eliminar usuario")
     
     return RedirectResponse(url="/users", status_code=303)
