@@ -45,7 +45,6 @@ Almacena la información de los incidentes de seguridad.
 | `source` | String | Origen de detección: EDR, Firewall, SIEM, Correo, Usuario, etc. |
 | `owner` | String | Analista responsable del incidente |
 | `detected_at` | DateTime | Fecha y hora de detección |
-| `created_at` | DateTime | Fecha y hora de creación del registro |
 | `updated_at` | DateTime | Fecha y hora de última actualización |
 
 ### Tabla: `user`
@@ -316,14 +315,6 @@ Este proyecto utiliza configuraciones de seguridad básicas apropiadas para desa
 - Sesiones seguras con cookies HttpOnly
 - Protección CSRF en formularios
 - **Archivos de log**: Solo acepta archivos .txt, almacenados como texto plano en base de datos
-
-**Pendiente para Producción:**
-- SECRET_KEY debe ser generada y almacenada de forma segura (variables de entorno)
-- HTTPS/TLS en todas las comunicaciones
-- Rate limiting y protección contra fuerza bruta
-- Logging y monitorización de seguridad
-- Backups automáticos de base de datos
-- Hardening del servidor y la aplicación
 
 ## 📈 Características Técnicas
 

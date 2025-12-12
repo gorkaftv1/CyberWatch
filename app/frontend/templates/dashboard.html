@@ -198,8 +198,8 @@
         </div>
 
         <ul class="dash-activity-list">
-          {% if recent_incidents %}
-            {% for item in recent_incidents %}
+          {% if activity %}
+            {% for item in activity %}
             <li class="dash-activity-item dash-activity-clickable" onclick="window.location.href='/incidents/{{ item.id }}'">
               <div class="dash-activity-dot
                 {% if item.severity == 'Crítico' or item.severity == 'critico' %}dash-activity-dot-critical

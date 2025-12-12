@@ -167,18 +167,23 @@ async def dashboard(
     trend = build_trend_data(incidents)
     type_data = build_type_data(incidents)
 
-    def sort_key(i: Incident) -> datetime:
-        return to_naive_utc(i.updated_at or i.detected_at or datetime.now(timezone.utc))
+    # Incidentes detectados recientemente (ordenados por detected_at)
+    def detected_sort_key(i: Incident) -> datetime:
+        return to_naive_utc(i.detected_at or datetime.now(timezone.utc))
 
     recent_incidents = sorted(
         [i for i in incidents if is_active_status(i.status)],
-        key=sort_key,
+        key=detected_sort_key,
         reverse=True,
     )[:6]
 
+    # Actividad reciente (incidentes actualizados recientemente, ordenados por updated_at)
+    def updated_sort_key(i: Incident) -> datetime:
+        return to_naive_utc(i.updated_at or i.detected_at or datetime.now(timezone.utc))
+
     activity = sorted(
         incidents,
-        key=sort_key,
+        key=updated_sort_key,
         reverse=True,
     )[:5]
 
